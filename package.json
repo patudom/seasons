@@ -8,7 +8,9 @@
     "@fortawesome/vue-fontawesome": "^3.0.5",
     "@mdi/font": "^7.4.47",
     "@wwtelescope/engine-pinia": "^0.9.0",
+    "date-fns-tz": "^3.2.0",
     "pinia": "^2.1.7",
+    "tz-lookup": "^6.1.25",
     "vue": "^3.4.15",
     "vuetify": "^3.4.11",
     "webpack-plugin-vuetify": "^2.0.0"
