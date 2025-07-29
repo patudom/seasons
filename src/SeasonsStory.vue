@@ -332,11 +332,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from "vue";
-import { Color } from "@wwtelescope/engine";
-import { GotoRADecZoomParams, engineStore } from "@wwtelescope/engine-pinia";
-import { BackgroundImageset, skyBackgroundImagesets, supportsTouchscreen, blurActiveElement, useWWTKeyboardControls } from "@cosmicds/vue-toolkit";
+import { ref, reactive, computed, markRaw, onMounted, nextTick } from "vue";
 import { useDisplay } from "vuetify";
+import { Color, Grids, Planets, WWTControl } from "@wwtelescope/engine";
+import { GotoRADecZoomParams, engineStore } from "@wwtelescope/engine-pinia";
+import {
+  BackgroundImageset,
+  LocationDeg,
+  skyBackgroundImagesets,
+  supportsTouchscreen,
+  blurActiveElement,
+  useWWTKeyboardControls,
+} from "@cosmicds/vue-toolkit";
+
+import { useTimezone } from "./timezones";
+import { makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
+import { SolarSystemObjects } from "@wwtelescope/engine-types";
+
 
 type SheetType = "text" | "video";
 type CameraParams = Omit<GotoRADecZoomParams, "instant">;
@@ -350,7 +362,7 @@ const store = engineStore();
 useWWTKeyboardControls(store);
 
 const touchscreen = supportsTouchscreen();
-const { smAndDown } = useDisplay();
+const { smAndDown, xs } = useDisplay();
 
 const props = withDefaults(defineProps<SeasonsStoryProps>(), {
   wwtNamespace: "seasons-story",
@@ -374,6 +386,45 @@ const buttonColor = ref("#ffffff");
 const tab = ref(0);
 
 const datePickerOpen = ref(false);
+const playing = ref(false);
+
+const showHorizon = ref(true);
+
+const wwtStats = markRaw({
+  timeResetCount: 0,
+  reverseCount: 0,
+  playPauseCount: 0,
+  speedups: [] as number[],
+  slowdowns: [] as number[],
+  rateSelections: [] as number[],
+  startTime: Date.now(),
+});
+
+const selectedLocation = ref<LocationDeg>({
+  longitudeDeg: -71.1056,
+  latitudeDeg: 42.3581,
+});
+
+const selectedTime = ref(Date.now());
+const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+
+const localSelectedDate = computed({
+  // if you console log this date it will still say the local timezone 
+  // as determined by the browser Intl.DateTimeFormat().resolvedOptions().timeZone
+  // but we have manually offset it so the hours are correct for the selected timezone
+  get: () => {
+    const time = selectedTime.value;
+    const fakeUTC = time + browserTimezoneOffset;
+    return new Date(fakeUTC + selectedTimezoneOffset.value);
+  },
+  set: (value: Date) => {
+    // get local time
+    const time = value.getTime();
+    // undo fake localization
+    const newTime = time - selectedTimezoneOffset.value - browserTimezoneOffset;
+    selectedTime.value = new Date(newTime).getTime();
+  }
+});
 
 onMounted(() => {
   store.waitForReady().then(async () => {
@@ -389,6 +440,9 @@ onMounted(() => {
     // Adding Alt-Az grid here
     store.applySetting(["showAltAzGrid", true]);
     store.applySetting(["altAzGridColor", Color.fromArgb(255, 255, 255, 255)]);
+    store.applySetting(["localHorizonMode", true]);
+
+    doWWTModifications();
   });
 });
 
@@ -399,6 +453,7 @@ const isLoading = computed(() => !ready.value);
 
 /* Properties related to device/screen characteristics */
 const smallSize = computed(() => smAndDown.value);
+const mobile = computed(() => smallSize.value && touchscreen);
 
 /* This lets us inject component data into element CSS */
 const cssVars = computed(() => {
@@ -454,6 +509,56 @@ function selectSheet(sheetType: SheetType | null) {
   } else {
     sheet.value = sheetType;
   }
+}
+
+function doWWTModifications() {
+  Grids._makeAltAzGridText = makeAltAzGridText;
+  Grids.drawEcliptic = drawEcliptic;
+
+  // We need to render one frame ahead of time
+  // as there's a lot of setup done on the first frame
+  // render that we need to use
+  WWTControl.singleton.renderOneFrame();
+
+  const boundRenderOneFrame = renderOneFrame.bind(WWTControl.singleton);
+  const newFrameRender = function() { 
+    boundRenderOneFrame(
+      showHorizon.value,
+      showHorizon.value,
+      false,
+    );
+  };
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  WWTControl.singleton._drawSkyOverlays = drawSkyOverlays.bind(WWTControl.singleton);
+
+  // as well as our custom text overlays
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  WWTControl.singleton.renderOneFrame = newFrameRender;
+
+  const originalUpdatePlanetLocations = Planets.updatePlanetLocations;
+  const planetScales = [
+    8,  // Sun
+    1.25,  // Mercury
+    1.25,  // Venus
+    1.25,  // Mars
+    2.5,  // Jupiter
+    4.5,  // Saturn
+    2,  // Uranus
+    2,  // Neptune
+    1,  // Pluto
+    1.25,  // Moon
+  ];
+  function newUpdatePlanetLocations(threeD: boolean) {
+    originalUpdatePlanetLocations(threeD);
+    for (let i = 0; i <= SolarSystemObjects.moon; i++) {
+      Planets._planetScales[i] = planetScales[i];
+    }
+  }
+  Planets.updatePlanetLocations = newUpdatePlanetLocations;
+  Planets.drawPlanets = drawPlanets;
 }
 </script>
 

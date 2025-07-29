@@ -1,6 +1,6 @@
 import Vue, { createApp, type Plugin } from "vue";
 
-import { FundingAcknowledgement, IconButton, CreditLogos } from "@cosmicds/vue-toolkit";
+import { FundingAcknowledgement, IconButton, CreditLogos, SpeedControl } from "@cosmicds/vue-toolkit";
 import SeasonsStory from "./SeasonsStory.vue";
 
 import vuetify from "../plugins/vuetify";
@@ -8,8 +8,6 @@ import vuetify from "../plugins/vuetify";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 import { WWTComponent, wwtPinia } from "@wwtelescope/engine-pinia";
-
-import DateTimePicker from "./components/TimeDisplay.vue"
 
 
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -57,6 +55,7 @@ createApp(SeasonsStory, {
   .component('icon-button', IconButton)
   .component('funding-acknowledgement', FundingAcknowledgement)
   .component('credit-logos', CreditLogos)
+  .component('speed-control', SpeedControl)
 
   // Mount
   .mount("#app");
