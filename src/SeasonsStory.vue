@@ -334,6 +334,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed, markRaw, onMounted, nextTick } from "vue";
 import { useDisplay } from "vuetify";
+
+import { AstroTime, Seasons } from "astronomy-engine";
+
 import { Color, Grids, Planets, WWTControl } from "@wwtelescope/engine";
 import { GotoRADecZoomParams, engineStore } from "@wwtelescope/engine-pinia";
 import {
@@ -389,6 +392,19 @@ const datePickerOpen = ref(false);
 const playing = ref(false);
 
 const showHorizon = ref(true);
+
+// Get the next 4 "dates of interest"
+// i.e. equinoxes and solstices
+const currentDate = new Date();
+const currentYear = currentDate.getUTCFullYear();
+const datesOfInterest = Seasons(currentYear);
+const datesBeforeNow = Object.entries(datesOfInterest).filter(([_key, value]: [string, AstroTime]) => value.date < currentDate).map(entry => entry[0]);
+if (datesBeforeNow.length > 0) {
+  const nextSeasonsInfo = Seasons(currentYear + 1);
+  datesBeforeNow.forEach(key => {
+    datesOfInterest[key] = nextSeasonsInfo[key];
+  });
+}
 
 const wwtStats = markRaw({
   timeResetCount: 0,
