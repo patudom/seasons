@@ -1,6 +1,6 @@
 import Vue, { createApp, type Plugin } from "vue";
 
-import { FundingAcknowledgement, IconButton, CreditLogos, SpeedControl } from "@cosmicds/vue-toolkit";
+import { FundingAcknowledgement, IconButton, LocationSelector, CreditLogos, SpeedControl } from "@cosmicds/vue-toolkit";
 import SeasonsStory from "./SeasonsStory.vue";
 
 import vuetify from "../plugins/vuetify";
@@ -13,13 +13,17 @@ import { WWTComponent, wwtPinia } from "@wwtelescope/engine-pinia";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import {
   faBookOpen,
+  faLocationDot,
   faTimes,
   faVideo,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(faBookOpen);
+library.add(faLocationDot);
 library.add(faTimes);
 library.add(faVideo);
+library.add(faXmark);
 
 /** v-hide directive taken from https://www.ryansouthgate.com/2020/01/30/vue-js-v-hide-element-whilst-keeping-occupied-space/ */
 // Extract the function out, up here, so I'm not writing it twice
@@ -56,6 +60,7 @@ createApp(SeasonsStory, {
   .component('funding-acknowledgement', FundingAcknowledgement)
   .component('credit-logos', CreditLogos)
   .component('speed-control', SpeedControl)
+  .component('location-selector', LocationSelector)
 
   // Mount
   .mount("#app");

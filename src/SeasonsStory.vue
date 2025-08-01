@@ -81,15 +81,67 @@
         </icon-button>
       </div>
       <div id="center-buttons">
+        <icon-button
+          v-model="showLocationSelector"
+          fa-icon="location-dot"
+          :color="buttonColor"
+          tooltip-text="Select Location"
+          tooltip-location="start"
+        ></icon-button>
+        <v-dialog
+          v-model="showLocationSelector"
+          max-width="fit-content"
+          transition="slide-y-transition"
+        >
+          <v-card>
+            <div id="geolocation-close">
+              <font-awesome-icon
+                style="cursor: pointer; z-index: 1000;"
+                icon="xmark"
+                size="xl"
+                @click="showLocationSelector = false"
+                @keyup.enter="showLocationSelector = false"
+                tabindex="0"
+                color="black"
+              ></font-awesome-icon>
+            </div>
+            <div id="geolocation-controls">
+              <geolocation-button
+                id="location"
+                size="30px"
+                density="default"
+                elevation="5"
+                :color="accentColor"
+                @geolocation="selectedLocation = {longitudeDeg: $event.longitude, latitudeDeg: $event.latitude}"
+              />
+              <location-search
+                :class="['location-search']"
+                small
+                button-size="xl"
+                :accent-color="accentColor"
+                :search-provider="searchProvider"
+                @set-location="setLocationFromSearchFeature"
+                @error="searchErrorMessage = $event"
+              >
+              </location-search>
+            </div>
+            <location-selector
+              :model-value="selectedLocation"
+              @update:modelValue="updateLocationFromMap"
+            />
+
+          </v-card>
+        </v-dialog>
       </div>
       <div id="right-buttons">
         <button
-          v-for="([key, value], index) in sortedDatesOfInterest"
+          v-for="([event, value], index) in sortedDatesOfInterest"
+          v-ripple
           class="event-button"
           :key="index"
-          @click="store.setTime(value.date)"
+          @click="goToEvent(event)"
         >
-          <div>{{ eventName(key) }}</div>
+          <div>{{ eventName(event) }}</div>
           <div>{{ dayString(value.date) }}</div>
         </button>
       </div>
@@ -268,7 +320,7 @@
                 <v-spacer class="end-spacer"></v-spacer>
               </v-card-text>
             </v-card>
-          </v-window-item>
+         </v-window-item>
           <v-window-item>
             <v-card class="no-bottom-border-radius scrollable">
               <v-card-text class="info-text no-bottom-border-radius">
@@ -339,12 +391,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, markRaw, onMounted, nextTick } from "vue";
+import { ref, reactive, computed, markRaw, onMounted, nextTick, watch } from "vue";
 import { useDisplay } from "vuetify";
 
-import { AstroTime, SeasonInfo, Seasons } from "astronomy-engine";
+import { AstroTime, Seasons } from "astronomy-engine";
 
-import { Color, Grids, Planets, WWTControl } from "@wwtelescope/engine";
+import { Color, Grids, Planets, Settings, WWTControl } from "@wwtelescope/engine";
 import { GotoRADecZoomParams, engineStore } from "@wwtelescope/engine-pinia";
 import {
   BackgroundImageset,
@@ -354,9 +406,11 @@ import {
   blurActiveElement,
   useWWTKeyboardControls,
 } from "@cosmicds/vue-toolkit";
+import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textForLocation } from "@cosmicds/vue-toolkit/src/mapbox";
 
 import { useTimezone } from "./timezones";
 import { makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
+import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
 
 
@@ -369,10 +423,15 @@ export interface SeasonsStoryProps {
 
 const store = engineStore();
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const wwtSettings: Settings = Settings.get_active();
+
 useWWTKeyboardControls(store);
 
 const touchscreen = supportsTouchscreen();
 const { smAndDown, xs } = useDisplay();
+
 
 const props = withDefaults(defineProps<SeasonsStoryProps>(), {
   wwtNamespace: "seasons-story",
@@ -397,6 +456,7 @@ const tab = ref(0);
 
 const datePickerOpen = ref(false);
 const playing = ref(false);
+const showLocationSelector = ref(false);
 
 const showHorizon = ref(true);
 
@@ -413,9 +473,11 @@ if (datesBeforeNow.length > 0) {
   });
 }
 
-type Season = keyof SeasonInfo;
+const startTime = ref(0);
+const endTime = ref(0);
+
 const sortedDatesOfInterest = computed(() => {
-  const entries: ([Season, AstroTime])[] = Object.entries(datesOfInterest) as [Season, AstroTime][];
+  const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
   return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
 });
 
@@ -448,6 +510,25 @@ function dayString(date: Date) {
   });
 }
 
+function goToEvent(event: EventOfInterest) {
+  console.log("HERE");
+  const day = datesOfInterest[event].date;
+  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(-5);
+
+  const midnightTime = day.getTime();
+
+  if (dayStart !== null) {
+    const start = new Date(midnightTime + dayStart);
+    store.setTime(start);
+    startTime.value = start.getTime();
+  }
+
+  if (dayEnd !== null) {
+    const end = new Date(midnightTime + dayEnd);
+    endTime.value = end.getTime(); 
+  }
+}
+
 const wwtStats = markRaw({
   timeResetCount: 0,
   reverseCount: 0,
@@ -462,9 +543,61 @@ const selectedLocation = ref<LocationDeg>({
   longitudeDeg: -71.1056,
   latitudeDeg: 42.3581,
 });
+const selectedLocationText = ref("");
+const searchErrorMessage = ref<string | null>(null);
+const geocodingOptions = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
+};
+
+updateSelectedLocationText();
+
+
+
+let userSelectedMapLocations: [number, number][] = [];
+let userSelectedSearchLocations: [number, number][] = [];
+
+function updateLocationFromMap(location: LocationDeg) {
+  selectedLocation.value = location;
+  userSelectedMapLocations.push([location.latitudeDeg, location.longitudeDeg]);
+}
+
+function getTextForLocation(longitudeDeg: number, latitudeDeg: number): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  return textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
+}
+
+function setLocationFromFeature(feature: MapBoxFeature) {
+  selectedLocation.value = { longitudeDeg: feature.center[0], latitudeDeg: feature.center[1] };
+  getTextForLocation(feature.center[0], feature.center[1]).then(text => {
+    selectedLocationText.value = text;
+  }).catch(_err => {
+    searchErrorMessage.value = "An error occurred while searching";
+  });
+}
+
+function setLocationFromSearchFeature(feature: MapBoxFeature) {
+  setLocationFromFeature(feature);
+  userSelectedSearchLocations.push(feature.center);
+}
+
+async function updateSelectedLocationText() {
+  selectedLocationText.value = await getTextForLocation(selectedLocation.value.longitudeDeg, selectedLocation.value.latitudeDeg);
+}
+
+function searchProvider(text: string): Promise<MapBoxFeatureCollection> {
+  return geocodingInfoForSearch(text, geocodingOptions);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function resetData() {
+  userSelectedMapLocations = [];
+  userSelectedSearchLocations = [];
+}
 
 const selectedTime = ref(Date.now());
-const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+const { getTimeforSunAlt } = useSun(store, selectedLocation, selectedTime, selectedTimezone);
 
 const localSelectedDate = computed({
   // if you console log this date it will still say the local timezone 
@@ -494,6 +627,8 @@ onMounted(() => {
 
     // If there are layers to set up, do that here!
     layersLoaded.value = true;
+
+    updateWWTLocation(selectedLocation.value);
 
     // Adding Alt-Az grid here
     store.applySetting(["showAltAzGrid", true]);
@@ -569,6 +704,11 @@ function selectSheet(sheetType: SheetType | null) {
   }
 }
 
+function updateWWTLocation(location: LocationDeg) {
+  wwtSettings.set_locationLat(location.latitudeDeg);
+  wwtSettings.set_locationLng(location.longitudeDeg);
+}
+
 function doWWTModifications() {
   Grids._makeAltAzGridText = makeAltAzGridText;
   Grids.drawEcliptic = drawEcliptic;
@@ -618,6 +758,14 @@ function doWWTModifications() {
   Planets.updatePlanetLocations = newUpdatePlanetLocations;
   Planets.drawPlanets = drawPlanets;
 }
+
+watch(selectedLocation, (location: LocationDeg) => {
+  console.log('selectedLocation changed', location);
+  // updateSelectedLocationText();
+  updateWWTLocation(location);
+  // resetCamera();
+  WWTControl.singleton.renderOneFrame();
+});
 </script>
 
 <style lang="less">
@@ -960,5 +1108,18 @@ video {
   border-radius: 5px;
   padding: 10px;
   width: 100%;
+  pointer-events: auto;
+}
+
+.map-container {
+  @media (max-width: 600px) {
+    width: 90vw;
+    height: 70vh;
+  }
+
+@media (min-width: 601px) {
+    width: 70vw;
+    height: 60vh;
+  }
 }
 </style>
