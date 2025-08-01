@@ -83,10 +83,17 @@
       <div id="center-buttons">
       </div>
       <div id="right-buttons">
+        <button
+          v-for="([key, value], index) in sortedDatesOfInterest"
+          class="event-button"
+          :key="index"
+          @click="store.setTime(value.date)"
+        >
+          <div>{{ eventName(key) }}</div>
+          <div>{{ dayString(value.date) }}</div>
+        </button>
       </div>
     </div>
-
-
     
     <!-- This block contains the elements (e.g. the project icons) displayed along the bottom of the screen -->
 
@@ -335,7 +342,7 @@
 import { ref, reactive, computed, markRaw, onMounted, nextTick } from "vue";
 import { useDisplay } from "vuetify";
 
-import { AstroTime, Seasons } from "astronomy-engine";
+import { AstroTime, SeasonInfo, Seasons } from "astronomy-engine";
 
 import { Color, Grids, Planets, WWTControl } from "@wwtelescope/engine";
 import { GotoRADecZoomParams, engineStore } from "@wwtelescope/engine-pinia";
@@ -403,6 +410,41 @@ if (datesBeforeNow.length > 0) {
   const nextSeasonsInfo = Seasons(currentYear + 1);
   datesBeforeNow.forEach(key => {
     datesOfInterest[key] = nextSeasonsInfo[key];
+  });
+}
+
+type Season = keyof SeasonInfo;
+const sortedDatesOfInterest = computed(() => {
+  const entries: ([Season, AstroTime])[] = Object.entries(datesOfInterest) as [Season, AstroTime][];
+  return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+});
+
+const EVENTS_OF_INTEREST = [
+  "mar_equinox",
+  "jun_solstice",
+  "sep_equinox",
+  "dec_solstice",
+] as const;
+type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
+
+function eventName(event: EventOfInterest): string {
+  switch (event) {
+  case "mar_equinox":
+    return "March Equinox";
+  case "jun_solstice":
+    return "June Solstice";
+  case "sep_equinox":
+    return "September Equinox";
+  case "dec_solstice":
+    return "December Solstice";
+  }
+}
+
+function dayString(date: Date) {
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 }
 
@@ -910,5 +952,13 @@ video {
 
 #date-picker {
   pointer-events: auto;
+}
+
+.event-button {
+  background: black;
+  border: 1px solid white;
+  border-radius: 5px;
+  padding: 10px;
+  width: 100%;
 }
 </style>
