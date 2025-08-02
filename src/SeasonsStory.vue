@@ -522,9 +522,10 @@ function dayString(date: Date) {
 function goToEvent(event: EventOfInterest) {
   console.log("HERE");
   const day = datesOfInterest[event].date;
-  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(-5);
-
-  const midnightTime = day.getTime();
+  const midnightTime = day.getTime() + 12 * 60 * 60 * 1000;
+  selectedTime.value = midnightTime;
+  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0);
+  console.log(new Date(dayStart ?? 0), new Date(dayEnd ?? 0));
 
   if (dayStart !== null) {
     const start = new Date(midnightTime + dayStart);
@@ -605,8 +606,8 @@ function resetData() {
 }
 
 const selectedTime = ref(Date.now());
-const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
-const { getTimeforSunAlt } = useSun(store, selectedLocation, selectedTime, selectedTimezone);
+const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+const { getTimeforSunAlt } = useSun(store, selectedLocation, selectedTime, selectedTimezoneOffset);
 
 const localSelectedDate = computed({
   // if you console log this date it will still say the local timezone 
