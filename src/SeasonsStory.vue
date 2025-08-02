@@ -184,6 +184,13 @@
           </v-card>
         </v-overlay>
       </div>
+
+      <v-slider
+        :color="accentColor"
+        :min="sliderMin"
+        :max="sliderMax"
+      >
+      </v-slider>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
       <speed-control v-model:playing="playing" 
@@ -450,7 +457,7 @@ const backgroundImagesets = reactive<BackgroundImageset[]>([]);
 const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
 const positionSet = ref(false);
-const accentColor = ref("#ffffff");
+const accentColor = ref("#90D5FF");
 const buttonColor = ref("#ffffff");
 const tab = ref(0);
 
@@ -475,6 +482,8 @@ if (datesBeforeNow.length > 0) {
 
 const startTime = ref(0);
 const endTime = ref(0);
+const sliderMin = 0;
+const sliderMax = 500;
 
 const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
@@ -1121,5 +1130,10 @@ video {
     width: 70vw;
     height: 60vh;
   }
+}
+
+.v-slider {
+  width: 90%;
+  pointer-events: auto;
 }
 </style>
