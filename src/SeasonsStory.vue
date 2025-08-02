@@ -522,19 +522,22 @@ function dayString(date: Date) {
 function goToEvent(event: EventOfInterest) {
   console.log("HERE");
   const day = datesOfInterest[event].date;
-  const midnightTime = day.getTime() + 12 * 60 * 60 * 1000;
-  selectedTime.value = midnightTime;
+  console.log(`day `, day);
+  const time = day.getTime();
+  console.log(new Date(time));
+  selectedTime.value = time;
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0);
-  console.log(new Date(dayStart ?? 0), new Date(dayEnd ?? 0));
 
   if (dayStart !== null) {
-    const start = new Date(midnightTime + dayStart);
+    const start = new Date(dayStart - selectedTimezoneOffset.value);
+    console.log(start);
     store.setTime(start);
     startTime.value = start.getTime();
   }
 
   if (dayEnd !== null) {
-    const end = new Date(midnightTime + dayEnd);
+    const end = new Date(dayEnd - selectedTimezoneOffset.value);
+    console.log(end);
     endTime.value = end.getTime(); 
   }
 }
@@ -635,9 +638,6 @@ onMounted(() => {
       instant: true
     }).then(() => positionSet.value = true);
 
-    // If there are layers to set up, do that here!
-    layersLoaded.value = true;
-
     updateWWTLocation(selectedLocation.value);
 
     // Adding Alt-Az grid here
@@ -646,6 +646,9 @@ onMounted(() => {
     store.applySetting(["localHorizonMode", true]);
 
     doWWTModifications();
+
+    // If there are layers to set up, do that here!
+    layersLoaded.value = true;
   });
 });
 

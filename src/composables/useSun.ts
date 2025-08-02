@@ -53,8 +53,13 @@ export function useSun(store: WWTEngineStore, location: Ref<LocationDeg>, _selec
     // takes about 45ms to run
     // search for time when sun is at given altitude
     // start at 12:00am and search every MINUTES_PER_INTERVAL
-    const minTime = selectedTime.value - (selectedTime.value % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value + MILLISECONDS_PER_DAY * 0.5;
-    const maxTime = minTime + MILLISECONDS_PER_DAY * 0.5;
+    const minTime = selectedTime.value - (selectedTime.value % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value;
+    const maxTime = minTime + MILLISECONDS_PER_DAY;
+    console.log("In getTimeforSunAlt");
+    console.log(selectedTimezoneOffset.value);
+    console.log(new Date(minTime));
+    console.log(new Date(maxTime));
+    console.log("======");
     // const ehr = eclipticHorizonAngle(location.latitudeRad, dateTime);
     let time = minTime;
     let sunAlt = getSunPositionAtTime(new Date(time)).altRad; // negative
