@@ -186,6 +186,7 @@
       </div>
 
       <v-slider
+        v-model="sliderValue"
         :color="accentColor"
         :min="sliderMin"
         :max="sliderMax"
@@ -446,7 +447,7 @@ const props = withDefaults(defineProps<SeasonsStoryProps>(), {
     return {
       raRad: 0,
       decRad: 0,
-      zoomDeg: 60
+      zoomDeg: 360,
     };
   }
 });
@@ -484,6 +485,18 @@ const startTime = ref(0);
 const endTime = ref(0);
 const sliderMin = 0;
 const sliderMax = 500;
+const sliderRange = sliderMax - sliderMin;
+const sliderValue = computed({
+  get() {
+    const fraction = (selectedTime.value - startTime.value) / (endTime.value - startTime.value);
+    return sliderMin + fraction * sliderRange;
+  },
+  set(value: number) {
+    const fraction = (value - sliderMin) / sliderRange;
+    const time = fraction * (endTime.value - startTime.value) + startTime.value;
+    selectedTime.value = time;
+  }
+});
 
 const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
@@ -610,7 +623,13 @@ function resetData() {
 
 const selectedTime = ref(Date.now());
 const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
-const { getTimeforSunAlt } = useSun(store, selectedLocation, selectedTime, selectedTimezoneOffset);
+const { getTimeforSunAlt, sunPlace } = useSun({
+  store,
+  location: selectedLocation,
+  selectedTime,
+  selectedTimezoneOffset,
+  zoomLevel: 360,
+});
 
 const localSelectedDate = computed({
   // if you console log this date it will still say the local timezone 
@@ -640,10 +659,20 @@ onMounted(() => {
 
     updateWWTLocation(selectedLocation.value);
 
+    store.setClockRate(0);
+    goToEvent(sortedDatesOfInterest.value[0][0]);
+
     // Adding Alt-Az grid here
     store.applySetting(["showAltAzGrid", true]);
     store.applySetting(["altAzGridColor", Color.fromArgb(255, 255, 255, 255)]);
     store.applySetting(["localHorizonMode", true]);
+
+    store.gotoTarget({
+      place: sunPlace,
+      noZoom: true,
+      instant: true,
+      trackObject: true,
+    });
 
     doWWTModifications();
 
@@ -778,6 +807,16 @@ watch(selectedLocation, (location: LocationDeg) => {
   updateWWTLocation(location);
   // resetCamera();
   WWTControl.singleton.renderOneFrame();
+});
+
+watch(selectedTime, (time: number) => {
+  store.setTime(new Date(time)); 
+  store.gotoTarget({
+    place: sunPlace,
+    noZoom: true,
+    instant: true,
+    trackObject: true,
+  });
 });
 </script>
 

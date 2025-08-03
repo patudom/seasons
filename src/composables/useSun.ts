@@ -14,19 +14,32 @@ const MILLISECONDS_PER_DAY = 1000 * SECONDS_PER_DAY;
 const secondsInterval = 40;
 const MILLISECONDS_PER_INTERVAL = 1000 * secondsInterval;
 
-export function useSun(store: WWTEngineStore, location: Ref<LocationDeg>, _selectedTime: Ref<number> | number, _selectedTimezoneOffset: Ref<number> | number) {
+type RefOrType<T> = Ref<T> | T;
+
+export interface UseSunOptions {
+  store: WWTEngineStore;
+  location: Ref<LocationDeg>;
+  selectedTime: RefOrType<number>;
+  selectedTimezoneOffset: RefOrType<number>;
+  zoomLevel?: number;
+  onStart?: () => void;
+}
+
+export function useSun(options: UseSunOptions) {
   
-  store.waitForReady().then(async () => {
-    // setup any watchers here
+  options.store.waitForReady().then(async () => {
+    if (options.onStart) {
+      options.onStart();
+    }
   });
   
-  const selectedTime = ref(_selectedTime);
-  const selectedTimezoneOffset = ref(_selectedTimezoneOffset);
+  const selectedTime = ref(options.selectedTime);
+  const selectedTimezoneOffset = ref(options.selectedTimezoneOffset);
   
   const locationRad = computed<LocationRad>(() => {
     return {
-      latitudeRad: location.value.latitudeDeg * D2R,
-      longitudeRad: location.value.longitudeDeg * D2R,
+      latitudeRad: options.location.value.latitudeDeg * D2R,
+      longitudeRad: options.location.value.longitudeDeg * D2R,
     };
   });
 
@@ -34,7 +47,7 @@ export function useSun(store: WWTEngineStore, location: Ref<LocationDeg>, _selec
   sunPlace.set_names(["Sun"]);
   sunPlace.set_classification(Classification.solarSystem);
   sunPlace.set_target(SolarSystemObjects.sun);
-  sunPlace.set_zoomLevel(20);
+  sunPlace.set_zoomLevel(options.zoomLevel ?? 20);
   
   const sunPosition = computed<EquatorialRad>(() =>{
     return {
