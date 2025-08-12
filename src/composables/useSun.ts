@@ -57,7 +57,6 @@ export function useSun(options: UseSunOptions) {
   });
 
   function getSunPositionAtTime(time: Date): AltAzRad {
-    console.log(options.location.value);
     const sunAltAz = equatorialToHorizontal(sunPosition.value.raRad, sunPosition.value.decRad, locationRad.value.latitudeRad, locationRad.value.longitudeRad, time);
     return sunAltAz;
   }
@@ -68,8 +67,8 @@ export function useSun(options: UseSunOptions) {
     // search for time when sun is at given altitude
     // start at 12:00am and search every MINUTES_PER_INTERVAL
     const refTime = referenceTime ?? selectedTime.value;
-    const minTime = refTime - (refTime % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value;
-    const maxTime = minTime + MILLISECONDS_PER_DAY;
+    const minTime = refTime - (refTime % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value + 0.5 * MILLISECONDS_PER_DAY;
+    const maxTime = minTime + 0.5 * MILLISECONDS_PER_DAY;
     console.log(`Min time: ${new Date(minTime)}`);
     console.log(`Max time: ${new Date(maxTime)}`);
     // const ehr = eclipticHorizonAngle(location.latitudeRad, dateTime);

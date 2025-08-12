@@ -13,6 +13,7 @@ import {
 import SeasonsStory from "./SeasonsStory.vue";
 
 import vuetify from "../plugins/vuetify";
+import { VIcon } from "vuetify/components/VIcon";
 
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -73,6 +74,7 @@ createApp(SeasonsStory, {
   .component('location-search', LocationSearch)
   .component('location-selector', LocationSelector)
   .component('date-time-picker', DateTimePicker)
+  .component('v-icon', VIcon)
 
   // Mount
   .mount("#app");
