@@ -135,11 +135,12 @@
       </div>
       <div id="right-buttons">
         <button
+          :class="[event === selectedEvent ? 'selected' : '']"
           v-for="([event, value], index) in sortedDatesOfInterest"
           v-ripple
           class="event-button"
           :key="index"
-          @click="goToEvent(event)"
+          @click="selectedEvent = event"
         >
           <div>{{ eventName(event) }}</div>
           <div>{{ dayString(value.date) }}</div>
@@ -511,6 +512,8 @@ const EVENTS_OF_INTEREST = [
 ] as const;
 type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
 
+const selectedEvent = ref<EventOfInterest>(EVENTS_OF_INTEREST[0]);
+
 function eventName(event: EventOfInterest): string {
   switch (event) {
   case "mar_equinox":
@@ -533,26 +536,31 @@ function dayString(date: Date) {
 }
 
 function goToEvent(event: EventOfInterest) {
-  console.log("HERE");
   const day = datesOfInterest[event].date;
-  console.log(`day `, day);
   const time = day.getTime();
-  console.log(new Date(time));
-  selectedTime.value = time;
-  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0);
+  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
-  if (dayStart !== null) {
-    const start = new Date(dayStart - selectedTimezoneOffset.value);
-    console.log(start);
-    store.setTime(start);
-    startTime.value = start.getTime();
+  if (dayStart === null || dayEnd === null) {
+    return;
   }
 
-  if (dayEnd !== null) {
-    const end = new Date(dayEnd - selectedTimezoneOffset.value);
-    console.log(end);
-    endTime.value = end.getTime(); 
-  }
+  console.log(`Rising: ${new Date(dayStart)}`);
+  console.log(`Setting : ${new Date(dayEnd)}`);
+
+  const start = new Date(dayStart - selectedTimezoneOffset.value);
+  store.setTime(start);
+  const timeStart = start.getTime();
+  startTime.value = timeStart;
+
+  const end = new Date(dayEnd - selectedTimezoneOffset.value);
+  endTime.value = end.getTime();
+
+  selectedTime.value = timeStart;
+
+  console.log(`Start time ${new Date(startTime.value)}`);
+  console.log(`End time: ${new Date(endTime.value)}`);
+  console.log(sliderValue.value);
+  console.log("======");
 }
 
 const wwtStats = markRaw({
@@ -660,7 +668,7 @@ onMounted(() => {
     updateWWTLocation(selectedLocation.value);
 
     store.setClockRate(0);
-    goToEvent(sortedDatesOfInterest.value[0][0]);
+    selectedEvent.value = sortedDatesOfInterest.value[0][0];
 
     // Adding Alt-Az grid here
     store.applySetting(["showAltAzGrid", true]);
@@ -818,6 +826,8 @@ watch(selectedTime, (time: number) => {
     trackObject: true,
   });
 });
+
+watch(selectedEvent, goToEvent);
 </script>
 
 <style lang="less">
@@ -1161,6 +1171,11 @@ video {
   padding: 10px;
   width: 100%;
   pointer-events: auto;
+
+  &.selected {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
 }
 
 .map-container {

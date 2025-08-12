@@ -57,25 +57,25 @@ export function useSun(options: UseSunOptions) {
   });
 
   function getSunPositionAtTime(time: Date): AltAzRad {
+    console.log(options.location.value);
     const sunAltAz = equatorialToHorizontal(sunPosition.value.raRad, sunPosition.value.decRad, locationRad.value.latitudeRad, locationRad.value.longitudeRad, time);
     return sunAltAz;
   }
 
   // function that finds at what time the sun will reach a given altitude during the current day to within 15 minutes
-  function getTimeforSunAlt(altDeg: number): { rising: number | null; setting: number | null; } {
+  function getTimeforSunAlt(altDeg: number, referenceTime?: number): { rising: number | null; setting: number | null; } {
     // takes about 45ms to run
     // search for time when sun is at given altitude
     // start at 12:00am and search every MINUTES_PER_INTERVAL
-    const minTime = selectedTime.value - (selectedTime.value % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value;
+    const refTime = referenceTime ?? selectedTime.value;
+    const minTime = refTime - (refTime % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value;
     const maxTime = minTime + MILLISECONDS_PER_DAY;
-    console.log("In getTimeforSunAlt");
-    console.log(selectedTimezoneOffset.value);
-    console.log(new Date(minTime));
-    console.log(new Date(maxTime));
-    console.log("======");
+    console.log(`Min time: ${new Date(minTime)}`);
+    console.log(`Max time: ${new Date(maxTime)}`);
     // const ehr = eclipticHorizonAngle(location.latitudeRad, dateTime);
     let time = minTime;
     let sunAlt = getSunPositionAtTime(new Date(time)).altRad; // negative
+    console.log(sunAlt);
     // find the two times it crosses the given altitude
     while ((sunAlt < altDeg * D2R) && (time < maxTime)) {
       time += MILLISECONDS_PER_INTERVAL;
