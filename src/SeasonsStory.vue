@@ -538,7 +538,9 @@ function dayString(date: Date) {
 function goToEvent(event: EventOfInterest) {
   const day = datesOfInterest[event].date;
   const time = day.getTime();
-  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
+  selectedTime.value = time;
+
+  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0);
   console.log("HERE");
 
   if (dayStart === null || dayEnd === null) {

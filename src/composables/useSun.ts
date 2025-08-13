@@ -62,12 +62,11 @@ export function useSun(options: UseSunOptions) {
   }
 
   // function that finds at what time the sun will reach a given altitude during the current day to within 15 minutes
-  function getTimeforSunAlt(altDeg: number, referenceTime?: number): { rising: number | null; setting: number | null; } {
+  function getTimeforSunAlt(altDeg: number): { rising: number | null; setting: number | null; } {
     // takes about 45ms to run
     // search for time when sun is at given altitude
     // start at 12:00am and search every MINUTES_PER_INTERVAL
-    const refTime = referenceTime ?? selectedTime.value;
-    const minTime = refTime - (refTime % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value + 0.5 * MILLISECONDS_PER_DAY;
+    const minTime = selectedTime.value - (selectedTime.value % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value + 0.5 * MILLISECONDS_PER_DAY;
     const maxTime = minTime + 0.5 * MILLISECONDS_PER_DAY;
     console.log(`Min time: ${new Date(minTime)}`);
     console.log(`Max time: ${new Date(maxTime)}`);
