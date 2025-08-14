@@ -9,7 +9,7 @@
     <WorldWideTelescope
       :wwt-namespace="wwtNamespace"
     ></WorldWideTelescope>
-
+      
 
     <!-- This contains the splash screen content -->
 
@@ -550,15 +550,16 @@ function goToEvent(event: EventOfInterest) {
   console.log(`Rising: ${new Date(dayStart)}`);
   console.log(`Setting : ${new Date(dayEnd)}`);
 
-  const start = new Date(dayStart - selectedTimezoneOffset.value);
-  store.setTime(start);
+  const start = new Date(dayStart);
+  store.setTime(new Date(time));
   const timeStart = start.getTime();
-  startTime.value = timeStart;
+  startTime.value = timeStart; // - timeStart % (24 * 60 * 60 * 1000) - selectedTimezoneOffset.value; // round down to the start of the day
 
-  const end = new Date(dayEnd - selectedTimezoneOffset.value);
+  const end = new Date(dayEnd);
   endTime.value = end.getTime();
+  // endTime.value = startTime.value + 24 * 60 * 60 * 1000  - selectedTimezoneOffset.value; // end of the day
 
-  selectedTime.value = timeStart;
+  // selectedTime.value = timeStart;
 
   console.log(`Start time ${new Date(startTime.value)}`);
   console.log(`End time: ${new Date(endTime.value)}`);
@@ -641,6 +642,22 @@ const { getTimeforSunAlt, sunPlace } = useSun({
   selectedTimezoneOffset,
   zoomLevel: 360,
 });
+
+// import { getTimezoneOffset } from "date-fns-tz";
+// const testTime = ref(new Date('Sep 22 2025 00:00:00 GMT-0400').getTime());
+// const testSun = useSun({
+//   store,
+//   location: selectedLocation,
+//   selectedTime: testTime,
+//   selectedTimezoneOffset: getTimezoneOffset("America/New_York", testTime.value),
+//   zoomLevel: 360,
+// });
+// console.log("Testing sun values");
+// const { rising: testRising, setting: testSetting } = testSun.getTimeforSunAlt(0);
+// if (testRising !== null && testSetting !== null) {
+//   console.log(`Test Sun Rising: ${new Date(testRising)}`);
+//   console.log(`Test Sun Setting: ${new Date(testSetting)}`);
+// }
 
 const localSelectedDate = computed({
   // if you console log this date it will still say the local timezone 
