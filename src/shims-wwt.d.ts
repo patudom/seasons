@@ -7,6 +7,10 @@ declare module "@wwtelescope/engine" {
     constructor(url: string);
   }
 
+  export class AstroCalc {
+    static getPlanet(jd: number, planet: number, latitudeRad: number, longitudeRad: number, height: number): { RA: number; dec: number };
+  }
+
   export class GlyphCache {
     constructor(glyphHeight: number);
     _texture: Texture;

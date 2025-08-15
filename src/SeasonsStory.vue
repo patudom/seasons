@@ -414,10 +414,12 @@ import {
   supportsTouchscreen,
   blurActiveElement,
   useWWTKeyboardControls,
+  D2R,
 } from "@cosmicds/vue-toolkit";
 import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textForLocation } from "@cosmicds/vue-toolkit/src/mapbox";
 
 import { useTimezone } from "./timezones";
+import { horizontalToEquatorial } from "./utils";
 import { makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
@@ -440,18 +442,6 @@ useWWTKeyboardControls(store);
 
 const touchscreen = supportsTouchscreen();
 const { smAndDown, xs } = useDisplay();
-
-
-const props = withDefaults(defineProps<SeasonsStoryProps>(), {
-  wwtNamespace: "seasons-story",
-  initialCameraParams: () => {
-    return {
-      raRad: 0,
-      decRad: 0,
-      zoomDeg: 360,
-    };
-  }
-});
 
 const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
@@ -503,6 +493,8 @@ const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
   return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
 });
+
+console.log(sortedDatesOfInterest.value);
 
 const EVENTS_OF_INTEREST = [
   "mar_equinox",
@@ -557,6 +549,9 @@ function goToEvent(event: EventOfInterest) {
 
   const end = new Date(dayEnd);
   endTime.value = end.getTime();
+
+  setTimeout(() => resetView(), 100);
+
   // endTime.value = startTime.value + 24 * 60 * 60 * 1000  - selectedTimezoneOffset.value; // end of the day
 
   // selectedTime.value = timeStart;
@@ -635,7 +630,7 @@ function resetData() {
 
 const selectedTime = ref(Date.now());
 const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
-const { getTimeforSunAlt, sunPlace } = useSun({
+const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
   location: selectedLocation,
   selectedTime,
@@ -677,34 +672,29 @@ const localSelectedDate = computed({
   }
 });
 
+const MAX_ZOOM = 480;
+
 onMounted(() => {
   store.waitForReady().then(async () => {
+    WWTControl.singleton.set_zoomMax(MAX_ZOOM);
     skyBackgroundImagesets.forEach(iset => backgroundImagesets.push(iset));
-    store.gotoRADecZoom({
-      ...props.initialCameraParams,
-      instant: true
-    }).then(() => positionSet.value = true);
 
     updateWWTLocation(selectedLocation.value);
 
+    store.setClockSync(false);
     store.setClockRate(0);
-    selectedEvent.value = sortedDatesOfInterest.value[0][0];
 
     // Adding Alt-Az grid here
     store.applySetting(["showAltAzGrid", true]);
     store.applySetting(["altAzGridColor", Color.fromArgb(255, 255, 255, 255)]);
     store.applySetting(["localHorizonMode", true]);
 
-    store.gotoTarget({
-      place: sunPlace,
-      noZoom: true,
-      instant: true,
-      trackObject: true,
-    });
-
     doWWTModifications();
 
+    selectedEvent.value = sortedDatesOfInterest.value[0][0];
+
     // If there are layers to set up, do that here!
+    positionSet.value = true;
     layersLoaded.value = true;
   });
 });
@@ -774,6 +764,38 @@ function selectSheet(sheetType: SheetType | null) {
   }
 }
 
+function resetView(zoomDeg?: number) {
+  console.log("Resetting view");
+  console.log(store);
+  const time = store.currentTime;
+
+  const latRad = selectedLocation.value.latitudeDeg * D2R;
+  const lonRad = selectedLocation.value.longitudeDeg * D2R;
+
+  const sunAltAz = getSunPositionAtTime(time);
+  console.log(time);
+  console.log(store.currentTime);
+  console.log(sunAltAz.altRad * 180 / Math.PI, sunAltAz.azRad * 180 / Math.PI);
+  const sunAz = sunAltAz.azRad;
+  const startAlt = (smallSize.value ? 20 : 25) * D2R;
+  const startRADec = horizontalToEquatorial(
+    startAlt,
+    sunAz,
+    latRad,
+    lonRad,
+    time,
+  );
+
+  console.log(startRADec.raRad * 180 / Math.PI, startRADec.decRad * 180 / Math.PI);
+
+  return store.gotoRADecZoom({
+    raRad: startRADec.raRad,
+    decRad: startRADec.decRad,
+    zoomDeg: zoomDeg ?? MAX_ZOOM,
+    instant: true,
+  });
+}
+
 function updateWWTLocation(location: LocationDeg) {
   wwtSettings.set_locationLat(location.latitudeDeg);
   wwtSettings.set_locationLng(location.longitudeDeg);
@@ -839,12 +861,7 @@ watch(selectedLocation, (location: LocationDeg) => {
 
 watch(selectedTime, (time: number) => {
   store.setTime(new Date(time)); 
-  store.gotoTarget({
-    place: sunPlace,
-    noZoom: true,
-    instant: true,
-    trackObject: true,
-  });
+  resetView(store.zoomDeg);
 });
 
 watch(selectedEvent, goToEvent);

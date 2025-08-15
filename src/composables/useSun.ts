@@ -62,7 +62,6 @@ export function useSun(options: UseSunOptions) {
     // const currentSun = CAASun.equatorialRectangularCoordinatesJ2000(jd);
     // console.log(currentSun);
     // const currentRaDec = AstroCalc.eclipticToJ2000(currentSun.x, currentSun.y,jd);
-    // @ts-expect-error getPlanet does exist
     const currentRaDec = AstroCalc.getPlanet(jd, 0, locationRad.value.latitudeRad, locationRad.value.longitudeRad, 0);
     const sunAltAz = equatorialToHorizontal(currentRaDec.RA * 15 * D2R, currentRaDec.dec * D2R, locationRad.value.latitudeRad, locationRad.value.longitudeRad, time);
     return sunAltAz;
