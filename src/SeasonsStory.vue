@@ -132,6 +132,13 @@
 
           </v-card>
         </v-dialog>
+        <icon-button
+          @activate="() => resetView()"
+          fa-icon="sun"
+          :color="buttonColor"
+          tooltip-text="Reset view"
+          tooltip-location="end"
+        ></icon-button>
       </div>
       <div id="right-buttons">
         <button
@@ -990,6 +997,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+#center-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
 }
 
 #right-buttons {

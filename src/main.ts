@@ -24,6 +24,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import {
   faBookOpen,
   faLocationDot,
+  faSun,
   faTimes,
   faVideo,
   faXmark,
@@ -31,6 +32,7 @@ import {
 
 library.add(faBookOpen);
 library.add(faLocationDot);
+library.add(faSun);
 library.add(faTimes);
 library.add(faVideo);
 library.add(faXmark);
