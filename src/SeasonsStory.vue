@@ -501,8 +501,6 @@ const sortedDatesOfInterest = computed(() => {
   return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
 });
 
-console.log(sortedDatesOfInterest.value);
-
 const EVENTS_OF_INTEREST = [
   "mar_equinox",
   "jun_solstice",
@@ -540,14 +538,10 @@ function goToEvent(event: EventOfInterest) {
   selectedTime.value = time;
 
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0);
-  console.log("HERE");
 
   if (dayStart === null || dayEnd === null) {
     return;
   }
-
-  console.log(`Rising: ${new Date(dayStart)}`);
-  console.log(`Setting : ${new Date(dayEnd)}`);
 
   const start = new Date(dayStart);
   store.setTime(new Date(time));
@@ -559,14 +553,6 @@ function goToEvent(event: EventOfInterest) {
 
   setTimeout(() => resetView(), 100);
 
-  // endTime.value = startTime.value + 24 * 60 * 60 * 1000  - selectedTimezoneOffset.value; // end of the day
-
-  // selectedTime.value = timeStart;
-
-  console.log(`Start time ${new Date(startTime.value)}`);
-  console.log(`End time: ${new Date(endTime.value)}`);
-  console.log(sliderValue.value);
-  console.log("======");
 }
 
 const wwtStats = markRaw({
@@ -772,17 +758,12 @@ function selectSheet(sheetType: SheetType | null) {
 }
 
 function resetView(zoomDeg?: number) {
-  console.log("Resetting view");
-  console.log(store);
   const time = store.currentTime;
 
   const latRad = selectedLocation.value.latitudeDeg * D2R;
   const lonRad = selectedLocation.value.longitudeDeg * D2R;
 
   const sunAltAz = getSunPositionAtTime(time);
-  console.log(time);
-  console.log(store.currentTime);
-  console.log(sunAltAz.altRad * 180 / Math.PI, sunAltAz.azRad * 180 / Math.PI);
   const sunAz = sunAltAz.azRad;
   const startAlt = (smallSize.value ? 20 : 25) * D2R;
   const startRADec = horizontalToEquatorial(
@@ -792,8 +773,6 @@ function resetView(zoomDeg?: number) {
     lonRad,
     time,
   );
-
-  console.log(startRADec.raRad * 180 / Math.PI, startRADec.decRad * 180 / Math.PI);
 
   return store.gotoRADecZoom({
     raRad: startRADec.raRad,
@@ -859,7 +838,6 @@ function doWWTModifications() {
 }
 
 watch(selectedLocation, (location: LocationDeg) => {
-  console.log('selectedLocation changed', location);
   // updateSelectedLocationText();
   updateWWTLocation(location);
   // resetCamera();

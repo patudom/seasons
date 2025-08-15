@@ -59,9 +59,6 @@ export function useSun(options: UseSunOptions) {
 
   function getSunPositionAtTime(time: Date): AltAzRad {
     const jd = getJulian(time);
-    // const currentSun = CAASun.equatorialRectangularCoordinatesJ2000(jd);
-    // console.log(currentSun);
-    // const currentRaDec = AstroCalc.eclipticToJ2000(currentSun.x, currentSun.y,jd);
     const currentRaDec = AstroCalc.getPlanet(jd, 0, locationRad.value.latitudeRad, locationRad.value.longitudeRad, 0);
     const sunAltAz = equatorialToHorizontal(currentRaDec.RA * 15 * D2R, currentRaDec.dec * D2R, locationRad.value.latitudeRad, locationRad.value.longitudeRad, time);
     return sunAltAz;
@@ -76,24 +73,19 @@ export function useSun(options: UseSunOptions) {
     // const maxTime = minTime + 0.5 * MILLISECONDS_PER_DAY;
     const minTime = selectedTime.value - (selectedTime.value % MILLISECONDS_PER_DAY) - selectedTimezoneOffset.value; 
     const maxTime = minTime + 1 * MILLISECONDS_PER_DAY;
-    console.log(`Min time: ${new Date(minTime)}`);
-    console.log(`Max time: ${new Date(maxTime)}`);
     // const ehr = eclipticHorizonAngle(location.latitudeRad, dateTime);
     let time = minTime;
     let sunAlt = getSunPositionAtTime(new Date(time)).altRad; // negative
-    console.log('initial sun altitude', sunAlt / D2R, 'at time', new Date(time));
     // find the two times it crosses the given altitude
     while ((sunAlt < altDeg * D2R) && (time < maxTime)) {
       time += MILLISECONDS_PER_INTERVAL;
       sunAlt = getSunPositionAtTime(new Date(time)).altRad;
     }
-    console.log('sun altitude at rising', sunAlt / D2R, 'at time', new Date(time));
     const rising = time == maxTime ? null : time;
     while ((sunAlt > altDeg * D2R) && (time < maxTime)) {
       time += MILLISECONDS_PER_INTERVAL;
       sunAlt = getSunPositionAtTime(new Date(time)).altRad;
     }
-    console.log('sun altitude at setting', sunAlt / D2R, 'at time', new Date(time));
     const setting = time == maxTime ? null : time;
 
     return {
