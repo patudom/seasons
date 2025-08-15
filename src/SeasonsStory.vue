@@ -6,9 +6,7 @@
   <div
     id="main-content"
   >
-    <WorldWideTelescope
-      :wwt-namespace="wwtNamespace"
-    ></WorldWideTelescope>
+    <WorldWideTelescope></WorldWideTelescope>
       
 
     <!-- This contains the splash screen content -->
@@ -535,9 +533,8 @@ function dayString(date: Date) {
 function goToEvent(event: EventOfInterest) {
   const day = datesOfInterest[event].date;
   const time = day.getTime();
-  selectedTime.value = time;
 
-  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0);
+  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
   if (dayStart === null || dayEnd === null) {
     return;
@@ -546,13 +543,13 @@ function goToEvent(event: EventOfInterest) {
   const start = new Date(dayStart);
   store.setTime(new Date(time));
   const timeStart = start.getTime();
+  selectedTime.value = timeStart;
   startTime.value = timeStart; // - timeStart % (24 * 60 * 60 * 1000) - selectedTimezoneOffset.value; // round down to the start of the day
 
   const end = new Date(dayEnd);
   endTime.value = end.getTime();
 
   setTimeout(() => resetView(), 100);
-
 }
 
 const wwtStats = markRaw({
@@ -665,7 +662,7 @@ const localSelectedDate = computed({
   }
 });
 
-const MAX_ZOOM = 480;
+const MAX_ZOOM = 500;
 
 onMounted(() => {
   store.waitForReady().then(async () => {
