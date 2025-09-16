@@ -101,18 +101,10 @@ export function drawPlanets(renderContext: RenderContext, _opacity: number) {
     var coronaOpacity = 0;
     var moonEffect = (Planets._planetScales[9] / 2 - sunMoonDist);
     // var darkLimb = Math.min(32, sunMoonDist * 32);
-    if (moonEffect > (Planets._planetScales[0] / 4)) {
-      eclipse = true;
-      coronaOpacity = Math.min(1, (moonEffect - (Planets._planetScales[0] / 2)) / 0.001);
-      Planets._drawPlanet(renderContext, 18, coronaOpacity);
-    }
-    for (const key in Planets._planetDrawOrder) {
-      // 0: Sun, 9: Moon, 19: Earth
-      var planetId = Planets._planetDrawOrder[key];
-      if (planetId <= 9) {
-        Planets._drawPlanet(renderContext, planetId, 1);
-      }
-    }
+
+    // For this story, we only want to draw the Sun
+    // which has planet ID 0
+    Planets._drawPlanet(renderContext, 0);
     return true;
 }
 
