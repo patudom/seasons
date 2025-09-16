@@ -1,0 +1,41 @@
+Last login: Fri Apr 25 10:24:07 on console
+(base) azmetariq@Azmes-MacBook-Pro ~ % ls 
+Applications				Tess_1.ipynb
+Creative Cloud Files			Untitled.ipynb
+Desktop					Untitled1.ipynb
+Documents				Untitled2.ipynb
+Downloads				anaconda3
+FCAD_REU				anniversary present year 1
+FinalGlupyterTest.ipynb			cds-portal
+Google Drive				data
+Library					ellc
+M83					hubbleds
+MilkyWay3D				jon_c_test glue jupyter version.ipynb
+Movies					matlab_crash_dump.16879-1
+Music					matlab_crash_dump.56762-1
+NEO_RELAB				matlab_crash_dump.87718-1
+PHOEBE_INVPROB.ipynb			matlab_crash_dump.99360-1
+Pictures				seasons-story
+Public					seasonsDS
+TESS_Binary
+(base) azmetariq@Azmes-MacBook-Pro ~ % ls seasons-story
+LICENSE.txt	node_modules	public		src		yarn.lock
+README.md	package.json	scripts		tsconfig.json
+dist		plugins		shims-vue.d.ts	vue.config.js
+(base) azmetariq@Azmes-MacBook-Pro ~ % cd seasons
+cd: no such file or directory: seasons
+(base) azmetariq@Azmes-MacBook-Pro ~ % cd seasons-story
+(base) azmetariq@Azmes-MacBook-Pro seasons-story % git init .
+Initialized empty Git repository in /Users/azmetariq/seasons-story/.git/
+(base) azmetariq@Azmes-MacBook-Pro seasons-story % git remote add origin https://github.com/azmetariq/seasons.git
+(base) azmetariq@Azmes-MacBook-Pro seasons-story % git branch             
+(base) azmetariq@Azmes-MacBook-Pro seasons-story % git remote -v    
+origin	https://github.com/azmetariq/seasons.git (fetch)
+origin	https://github.com/azmetariq/seasons.git (push)
+(base) azmetariq@Azmes-MacBook-Pro seasons-story % git remote add upstream https://github.com/cosmicds/seasons.git
+(base) azmetariq@Azmes-MacBook-Pro seasons-story % git remote -v
+origin	https://github.com/azmetariq/seasons.git (fetch)
+origin	https://github.com/azmetariq/seasons.git (push)
+upstream	https://github.com/cosmicds/seasons.git (fetch)
+upstream	https://github.com/cosmicds/seasons.git (push)
+(base) azmetariq@Azmes-MacBook-Pro seasons-story %                   
