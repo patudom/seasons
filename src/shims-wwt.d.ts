@@ -1,5 +1,4 @@
 import { Color, RenderContext } from "@wwtelescope/engine";
-import { SolarSystemObjects } from "@wwtelescope/engine-types";
 
 declare module "@wwtelescope/engine" {
 
@@ -8,6 +7,7 @@ declare module "@wwtelescope/engine" {
   }
 
   export class AstroCalc {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     static getPlanet(jd: number, planet: number, latitudeRad: number, longitudeRad: number, height: number): { RA: number; dec: number };
   }
 
