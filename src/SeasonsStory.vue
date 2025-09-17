@@ -139,6 +139,23 @@
         ></icon-button>
       </div>
       <div id="right-buttons">
+        <div class="location-date-display">
+          <v-chip 
+            :color="accentColor"
+            size="small"
+            elevation="3"
+            :text="selectedLocationText"
+            variant="flat"
+          > </v-chip>
+          <v-chip 
+            :color="accentColor"
+            :prepend-icon="smallSize ? `` : `mdi-clock`"
+            size="small"
+            elevation="1"
+            :text="selectedLocaledTimeDateString"
+            variant="flat"
+          > </v-chip>
+        </div>
         <button
           :class="[event === selectedEvent ? 'selected' : '']"
           v-for="([event, value], index) in sortedDatesOfInterest"
@@ -428,6 +445,7 @@ import { horizontalToEquatorial } from "./utils";
 import { makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
+import { formatInTimeZone } from "date-fns-tz";
 
 
 type SheetType = "text" | "video";
@@ -573,8 +591,6 @@ const geocodingOptions = {
   access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
 };
 
-updateSelectedLocationText();
-
 
 
 let userSelectedMapLocations: [number, number][] = [];
@@ -619,13 +635,18 @@ function resetData() {
 }
 
 const selectedTime = ref(Date.now());
-const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
   location: selectedLocation,
   selectedTime,
   selectedTimezoneOffset,
   zoomLevel: 360,
+});
+
+const selectedLocaledTimeDateString = computed(() => {
+  const formatString = smallSize.value ? "MM/dd, h:mm:ss aa" : "MM/dd/yyyy h:mm:ss aa (zzz)";
+  return formatInTimeZone(selectedTime.value, selectedTimezone.value, formatString);
 });
 
 // import { getTimezoneOffset } from "date-fns-tz";
@@ -665,6 +686,7 @@ const localSelectedDate = computed({
 const MAX_ZOOM = 500;
 
 onMounted(() => {
+  updateSelectedLocationText();
   store.waitForReady().then(async () => {
     WWTControl.singleton.set_zoomMax(MAX_ZOOM);
     skyBackgroundImagesets.forEach(iset => backgroundImagesets.push(iset));
@@ -835,9 +857,8 @@ function doWWTModifications() {
 }
 
 watch(selectedLocation, (location: LocationDeg) => {
-  // updateSelectedLocationText();
+  updateSelectedLocationText();
   updateWWTLocation(location);
-  // resetCamera();
   WWTControl.singleton.renderOneFrame();
 });
 
@@ -1218,5 +1239,15 @@ video {
 .v-slider {
   width: 90%;
   pointer-events: auto;
+}
+
+.location-date-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .v-chip {
+    width: fit-content;
+  }
 }
 </style>
