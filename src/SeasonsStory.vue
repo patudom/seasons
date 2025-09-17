@@ -200,7 +200,8 @@
       </v-slider>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
-      <speed-control v-model:playing="playing" 
+      <speed-control
+        v-model="playing" 
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
@@ -627,7 +628,7 @@ setInterval(() => {
   if (playing.value) {
     selectedTime.value = currentTime.value.getTime();
   }
-}, 500);
+}, 50);
 
 const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({

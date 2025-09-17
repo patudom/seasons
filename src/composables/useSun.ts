@@ -59,6 +59,8 @@ export function useSun(options: UseSunOptions) {
 
   function getSunPositionAtTime(time: Date): AltAzRad {
     const jd = getJulian(time);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     const currentRaDec = AstroCalc.getPlanet(jd, 0, locationRad.value.latitudeRad, locationRad.value.longitudeRad, 0);
     const sunAltAz = equatorialToHorizontal(currentRaDec.RA * 15 * D2R, currentRaDec.dec * D2R, locationRad.value.latitudeRad, locationRad.value.longitudeRad, time);
     return sunAltAz;

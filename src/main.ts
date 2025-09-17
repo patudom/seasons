@@ -11,6 +11,7 @@ import {
   DateTimePicker
 } from "@cosmicds/vue-toolkit";
 import SeasonsStory from "./SeasonsStory.vue";
+import TimeDisplay from "./components/TimeDisplay.vue";
 
 import vuetify from "../plugins/vuetify";
 import { VIcon } from "vuetify/components/VIcon";
@@ -76,6 +77,7 @@ createApp(SeasonsStory, {
   .component('location-search', LocationSearch)
   .component('location-selector', LocationSelector)
   .component('date-time-picker', DateTimePicker)
+  .component('time-display', TimeDisplay)
   .component('v-icon', VIcon)
 
   // Mount
