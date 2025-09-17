@@ -3,14 +3,15 @@ import Vue, { createApp, type Plugin } from "vue";
 import {
   FundingAcknowledgement,
   IconButton,
-  LocationSearch,
   LocationSelector,
   GeolocationButton,
   CreditLogos,
   SpeedControl,
-  DateTimePicker
+  DateTimePicker,
+  // LocationSearch,
 } from "@cosmicds/vue-toolkit";
 import SeasonsStory from "./SeasonsStory.vue";
+import LocationSearch from "./components/LocationSearch.vue";
 
 import vuetify from "../plugins/vuetify";
 import { VIcon } from "vuetify/components/VIcon";
