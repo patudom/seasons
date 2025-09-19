@@ -217,7 +217,8 @@
       </v-slider>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
-      <speed-control v-model:playing="playing" 
+      <speed-control
+        v-model="playing" 
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
@@ -424,6 +425,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, markRaw, onMounted, nextTick, watch } from "vue";
 import { useDisplay } from "vuetify";
+import { storeToRefs } from "pinia";
 
 import { AstroTime, Seasons } from "astronomy-engine";
 
@@ -456,6 +458,9 @@ export interface SeasonsStoryProps {
 }
 
 const store = engineStore();
+const {
+  currentTime,
+} = storeToRefs(store);
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -635,6 +640,11 @@ function resetData() {
 }
 
 const selectedTime = ref(Date.now());
+setInterval(() => {
+  if (playing.value) {
+    selectedTime.value = currentTime.value.getTime();
+  }
+}, 50);
 const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
