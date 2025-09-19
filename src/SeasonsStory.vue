@@ -139,6 +139,23 @@
         ></icon-button>
       </div>
       <div id="right-buttons">
+        <div class="location-date-display">
+          <v-chip 
+            :color="accentColor"
+            size="small"
+            elevation="3"
+            :text="selectedLocationText"
+            variant="flat"
+          > </v-chip>
+          <v-chip 
+            :color="accentColor"
+            :prepend-icon="smallSize ? `` : `mdi-clock`"
+            size="small"
+            elevation="1"
+            :text="selectedLocaledTimeDateString"
+            variant="flat"
+          > </v-chip>
+        </div>
         <button
           :class="[event === selectedEvent ? 'selected' : '']"
           v-for="([event, value], index) in sortedDatesOfInterest"
@@ -200,7 +217,8 @@
       </v-slider>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
-      <speed-control v-model:playing="playing" 
+      <speed-control
+        v-model="playing" 
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
@@ -407,6 +425,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, markRaw, onMounted, nextTick, watch } from "vue";
 import { useDisplay } from "vuetify";
+import { storeToRefs } from "pinia";
 
 import { AstroTime, Seasons } from "astronomy-engine";
 
@@ -428,6 +447,7 @@ import { horizontalToEquatorial } from "./utils";
 import { makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
+import { formatInTimeZone } from "date-fns-tz";
 
 
 type SheetType = "text" | "video";
@@ -438,6 +458,9 @@ export interface SeasonsStoryProps {
 }
 
 const store = engineStore();
+const {
+  currentTime,
+} = storeToRefs(store);
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -573,8 +596,6 @@ const geocodingOptions = {
   access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
 };
 
-updateSelectedLocationText();
-
 
 
 let userSelectedMapLocations: [number, number][] = [];
@@ -619,13 +640,25 @@ function resetData() {
 }
 
 const selectedTime = ref(Date.now());
-const { selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+setInterval(() => {
+  if (playing.value) {
+    selectedTime.value = currentTime.value.getTime();
+  }
+}, 50);
+
+const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+  
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
   location: selectedLocation,
   selectedTime,
   selectedTimezoneOffset,
   zoomLevel: 360,
+});
+
+const selectedLocaledTimeDateString = computed(() => {
+  const formatString = smallSize.value ? "MM/dd, h:mm:ss aa" : "MM/dd/yyyy h:mm:ss aa (zzz)";
+  return formatInTimeZone(selectedTime.value, selectedTimezone.value, formatString);
 });
 
 // import { getTimezoneOffset } from "date-fns-tz";
@@ -665,6 +698,7 @@ const localSelectedDate = computed({
 const MAX_ZOOM = 500;
 
 onMounted(() => {
+  updateSelectedLocationText();
   store.waitForReady().then(async () => {
     WWTControl.singleton.set_zoomMax(MAX_ZOOM);
     skyBackgroundImagesets.forEach(iset => backgroundImagesets.push(iset));
@@ -835,9 +869,8 @@ function doWWTModifications() {
 }
 
 watch(selectedLocation, (location: LocationDeg) => {
-  // updateSelectedLocationText();
+  updateSelectedLocationText();
   updateWWTLocation(location);
-  // resetCamera();
   WWTControl.singleton.renderOneFrame();
 });
 
@@ -1254,5 +1287,14 @@ video {
 
 #geolocation-wrapper-location .v-btn {
   background-color: black;
+}
+.location-date-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .v-chip {
+    width: fit-content;
+  }
 }
 </style>
