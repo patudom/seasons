@@ -1288,6 +1288,7 @@ video {
 #geolocation-wrapper-location .v-btn {
   background-color: black;
 }
+
 .location-date-display {
   display: flex;
   flex-direction: column;

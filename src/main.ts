@@ -11,7 +11,9 @@ import {
   // LocationSearch,
 } from "@cosmicds/vue-toolkit";
 import SeasonsStory from "./SeasonsStory.vue";
+
 import LocationSearch from "./components/LocationSearch.vue";
+
 import TimeDisplay from "./components/TimeDisplay.vue";
 
 import vuetify from "../plugins/vuetify";
