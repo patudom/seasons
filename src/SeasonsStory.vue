@@ -645,7 +645,9 @@ setInterval(() => {
     selectedTime.value = currentTime.value.getTime();
   }
 }, 50);
+
 const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+  
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
   location: selectedLocation,
