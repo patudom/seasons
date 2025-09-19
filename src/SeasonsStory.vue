@@ -1253,6 +1253,42 @@ video {
   pointer-events: auto;
 }
 
+#geolocation-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
+#geolocation-controls {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  position: absolute;
+  width: 350px;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  gap: 5px;
+
+  .location-search {
+    flex-grow: 1;
+
+    .v-list-item {
+      z-index: 5000;
+    }
+  }
+
+  @media (max-width: 600px) {
+    width: 300px;
+  }
+}
+
+#geolocation-wrapper-location .v-btn {
+  background-color: black;
+}
+
 .location-date-display {
   display: flex;
   flex-direction: column;
