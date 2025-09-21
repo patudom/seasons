@@ -12,8 +12,8 @@ import {
 } from "@cosmicds/vue-toolkit";
 import SeasonsStory from "./SeasonsStory.vue";
 
+import SplashScreen from "./components/SplashScreen.vue";
 import LocationSearch from "./components/LocationSearch.vue";
-
 import TimeDisplay from "./components/TimeDisplay.vue";
 
 import vuetify from "../plugins/vuetify";
@@ -71,6 +71,7 @@ createApp(SeasonsStory, {
 
   // Components
   .component("WorldWideTelescope", WWTComponent)
+  .component("splash-screen", SplashScreen)
   .component('font-awesome-icon', FontAwesomeIcon)
   .component('icon-button', IconButton)
   .component('funding-acknowledgement', FundingAcknowledgement)

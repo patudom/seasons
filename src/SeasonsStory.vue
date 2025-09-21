@@ -10,38 +10,11 @@
       
 
     <!-- This contains the splash screen content -->
-
-    <v-overlay
-      :model-value="showSplashScreen"
-      absolute
-      opacity="0.6"
-      :style="cssVars"
-      id="splash-overlay"
-    >
-      <div
-        id="splash-screen"
-        v-click-outside="closeSplashScreen"
-        :style="cssVars"
-      >
-        <font-awesome-icon
-          id="close-splash-button"
-          @click="closeSplashScreen"
-          @keyup.enter="closeSplashScreen"
-          icon="xmark"
-          tabindex="0"
-        />
-        <div id="splash-screen-text">
-          <p>Splash Screen Content</p>
-        </div>
-        <div id="splash-screen-acknowledgements" class="small">
-          This Data Story is brought to you by <a href="https://www.cosmicds.cfa.harvard.edu/" target="_blank" rel="noopener noreferrer">Cosmic Data Stories</a> and <a href="https://www.worldwidetelescope.org/home/" target="_blank" rel="noopener noreferrer">WorldWide Telescope</a>.
-          
-          <div id="splash-screen-logos">
-            <credit-logos logo-size="5vmin"/>
-          </div>
-        </div>
-      </div>
-    </v-overlay>
+  <splash-screen
+    title="Seasons"
+    :cssVars="cssVars"
+    @close="closeSplashScreen"
+  />
 
     <transition name="fade">
       <div
@@ -66,14 +39,6 @@
           fa-icon="book-open"
           :color="buttonColor"
           :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
-          tooltip-location="start"
-        >
-        </icon-button>
-        <icon-button
-          v-model="showVideoSheet"
-          fa-icon="video"
-          :color="buttonColor"
-          tooltip-text="Watch video"
           tooltip-location="start"
         >
         </icon-button>
@@ -127,16 +92,8 @@
               :model-value="selectedLocation"
               @update:modelValue="updateLocationFromMap"
             />
-
           </v-card>
         </v-dialog>
-        <icon-button
-          @activate="() => resetView()"
-          fa-icon="sun"
-          :color="buttonColor"
-          tooltip-text="Reset view"
-          tooltip-location="end"
-        ></icon-button>
       </div>
       <div id="right-buttons">
         <div class="location-date-display">
@@ -478,7 +435,7 @@ const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
 const positionSet = ref(false);
 const accentColor = ref("#90D5FF");
-const buttonColor = ref("#ffffff");
+const buttonColor = ref("#CC49BB"); //#CC49BB #941984 #D7A9EE #75408F
 const tab = ref(0);
 
 const datePickerOpen = ref(false);
@@ -773,6 +730,7 @@ const showVideoSheet = computed({
   This is convenient if there's any other logic that we want to run
   when the splash screen is closed
 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function closeSplashScreen() {
   showSplashScreen.value = false;
 }
