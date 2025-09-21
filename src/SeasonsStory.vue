@@ -981,6 +981,9 @@ body {
 }
 
 #center-buttons {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   gap: 5px;
