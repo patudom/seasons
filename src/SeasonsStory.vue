@@ -11,6 +11,7 @@
 
     <!-- This contains the splash screen content -->
   <splash-screen
+    v-if="splashReady"
     title="Seasons"
     :cssVars="cssVars"
     @close="closeSplashScreen"
@@ -37,7 +38,7 @@
         <icon-button
           v-model="showTextSheet"
           fa-icon="book-open"
-          :color="buttonColor"
+          :color="accentColor"
           :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
           tooltip-location="start"
         >
@@ -47,7 +48,7 @@
         <icon-button
           v-model="showLocationSelector"
           fa-icon="location-dot"
-          :color="buttonColor"
+          :color="accentColor"
           tooltip-text="Select Location"
           tooltip-location="start"
         ></icon-button>
@@ -119,7 +120,7 @@
           v-ripple
           class="event-button"
           :key="index"
-          @click="selectedEvent = event"
+          @click="selectedEvent = event;"
         >
           <div>{{ eventName(event) }}</div>
           <div>{{ dayString(value.date) }}</div>
@@ -430,12 +431,13 @@ const { smAndDown, xs } = useDisplay();
 
 const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
+const accentColorReady = computed(() => selectedEvent.value !== null);
+const splashReady = computed(() => splash && accentColorReady.value);
 const backgroundImagesets = reactive<BackgroundImageset[]>([]);
 const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
 const positionSet = ref(false);
-const accentColor = ref("#90D5FF");
-const buttonColor = ref("#CC49BB"); //#CC49BB #941984 #D7A9EE #75408F
+
 const tab = ref(0);
 
 const datePickerOpen = ref(false);
@@ -487,7 +489,7 @@ const EVENTS_OF_INTEREST = [
 ] as const;
 type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
 
-const selectedEvent = ref<EventOfInterest>(EVENTS_OF_INTEREST[0]);
+const selectedEvent = ref<EventOfInterest | null>(null);
 
 function eventName(event: EventOfInterest): string {
   switch (event) {
@@ -501,6 +503,51 @@ function eventName(event: EventOfInterest): string {
     return "December Solstice";
   }
 }
+
+function getCurrentSeason(event: string, latitude: number): 'spring' | 'summer' | 'autumn' | 'winter' {
+
+  if (latitude >= 0) {
+    switch (event) {
+    case "mar_equinox":
+      return "spring";
+    case "jun_solstice":
+      return "summer";
+    case "sep_equinox":
+      return "autumn";
+    case "dec_solstice":
+      return "winter";      
+    }
+  } else {
+    switch (event) {
+    case "mar_equinox":
+      return "autumn";
+    case "jun_solstice":
+      return "winter";
+    case "sep_equinox":
+      return "spring";
+    case "dec_solstice":
+      return "summer";      
+    }
+  }
+  return "spring"; // fallback
+}
+
+const seasonalColors = {
+  spring: '#FFA0D7',  
+  summer: '#F7EB67',  
+  autumn: '#FEB770',  
+  winter: '#91C2F9'   
+};
+
+const accentColor = computed(() => {
+  const event = selectedEvent.value;
+  if (!event) {
+    return seasonalColors.spring;
+  }
+  const latitude = selectedLocation.value.latitudeDeg;
+  const currentSeason = getCurrentSeason(event, latitude);
+  return seasonalColors[currentSeason];
+});
 
 function dayString(date: Date) {
   return date.toLocaleString("en-US", {
@@ -552,8 +599,6 @@ const geocodingOptions = {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
 };
-
-
 
 let userSelectedMapLocations: [number, number][] = [];
 let userSelectedSearchLocations: [number, number][] = [];
@@ -672,6 +717,7 @@ onMounted(() => {
 
     doWWTModifications();
 
+    // Set the initial event after everything is ready
     selectedEvent.value = sortedDatesOfInterest.value[0][0];
 
     // If there are layers to set up, do that here!
@@ -837,7 +883,11 @@ watch(selectedTime, (time: number) => {
   resetView(store.zoomDeg);
 });
 
-watch(selectedEvent, goToEvent);
+watch(selectedEvent, (event: EventOfInterest | null) => {
+  if (event) {
+    goToEvent(event);
+  }
+});
 </script>
 
 <style lang="less">
