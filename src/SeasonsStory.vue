@@ -105,14 +105,6 @@
             :text="selectedLocationText"
             variant="flat"
           > </v-chip>
-          <v-chip 
-            :color="accentColor"
-            :prepend-icon="smallSize ? `` : `mdi-clock`"
-            size="small"
-            elevation="1"
-            :text="selectedLocaledTimeDateString"
-            variant="flat"
-          > </v-chip>
         </div>
         <button
           :class="[event === selectedEvent ? 'selected' : '']"
@@ -131,47 +123,20 @@
     <!-- This block contains the elements (e.g. the project icons) displayed along the bottom of the screen -->
 
     <div id="bottom-content">
-      <div id="date-picker">
-        <v-overlay 
-          v-model="datePickerOpen"
-          activator="parent"
-          location-strategy="connected"
-          location="top end"
-          origin="bottom end"
-          :scrim="false"
-          :style="cssVars"
-        >
-        <template #activator="{props}">
-          <!-- any props added are passed directly to v-card -->
-          <v-card 
-            v-bind="props"
-            class="td__card"
-            width="fit-content"
-            rounded="lg"
-            tabindex="0"
-            @keyup.enter="props.onClick"
-            >
-            <time-display class="bsn__time" :date="localSelectedDate" ampm :short-time-date="true" show-timezone :timezone="shortTimezone" />
-            <v-icon v-if="!(smAndDown || mobile)" class="td__icon"  >mdi-cursor-default-click</v-icon>
-          </v-card>
-        </template>
-          <v-card ref="dtpCard" tabindex="0" width="fit-content" elevation="5">
-            <v-icon tabindex="0" class="dtp-close-button" @click="datePickerOpen=false" @keyup.enter="datePickerOpen=false" :color="accentColor" size="18">mdi-close</v-icon>
-            <date-time-picker tabindex="0" v-model="localSelectedDate" :editable-time="true">
-              <!-- <button class="dtp__button" @click="() => {playbackControl.pause(); set9pm(); goToTCrB()}" name="set-9pm" aria-label="Set time to 9pm">9pm</button>
-              <button class="dtp__button" @click="() => {playbackControl.pause(); setMidnight(); goToTCrB()}" name="set-midnight" aria-label="Set time to Midnight">Midnight</button>-->
-              <button class="dtp__button" @click="() => {selectedTime = Date.now()}" name="set-now" aria-label="Set time to Now">Now</button> 
-            </date-time-picker>
-          </v-card>
-        </v-overlay>
-      </div>
 
       <v-slider
         v-model="sliderValue"
         :color="accentColor"
         :min="sliderMin"
         :max="sliderMax"
+        thumb-label="always"
+        class="time-slider"
       >
+        <template v-slot:thumb-label>
+          <div class="thumb-label">
+            {{ selectedLocaledTimeDateString }}
+          </div>
+        </template>
       </v-slider>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
@@ -659,7 +624,7 @@ const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
 });
 
 const selectedLocaledTimeDateString = computed(() => {
-  const formatString = smallSize.value ? "MM/dd, h:mm:ss aa" : "MM/dd/yyyy h:mm:ss aa (zzz)";
+  const formatString = "h:mm aa (zzz)";
   return formatInTimeZone(selectedTime.value, selectedTimezone.value, formatString);
 });
 
@@ -1259,6 +1224,26 @@ video {
 .v-slider {
   width: 90%;
   pointer-events: auto;
+}
+
+.time-slider {
+
+  .v-slider-thumb {
+
+    .v-slider-thumb__label {
+      color: white;
+      background-color: black;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      width: max-content;
+      height: 2.5rem;
+      font-size: 1rem;
+
+      &::before {
+        color: var(--accent-color);
+      }
+    }
+  }
 }
 
 #geolocation-close {
