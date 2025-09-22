@@ -28,6 +28,24 @@
         </div>
       </div>
 
+      <div id="location-input-section">
+        <p class="location-prompt">Enter a location to get started:</p>
+        <location-search
+          :class="['splash-location-search']"
+          small
+          button-size="large"
+          :accent-color="cssVars['--accent-color']"
+          :search-provider="searchProvider"
+          @set-location="handleLocationSet"
+          @error="searchErrorMessage = $event"
+          placeholder="Enter city, state, or address"
+        >
+        </location-search>
+        <div v-if="searchErrorMessage" class="error-message">
+          {{ searchErrorMessage }}
+        </div>
+      </div>
+
       <div>
         <v-btn
           class="splash-get-started"
@@ -58,7 +76,9 @@
 
 
 <script setup lang="ts">
-import {computed} from 'vue';
+import {computed, defineProps, ref } from 'vue';
+import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch } from "@cosmicds/vue-toolkit/src/mapbox";
+
 export interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cssVars?: any;
@@ -71,20 +91,35 @@ const props = withDefaults(defineProps<Props>(), {
   cssVars: () => ({}),
 });
 
-console.log(props.cssVars);
-
 const cssVars = computed(() => {
   return {
     ...props.cssVars,
     ...{'--accent-color': props.color == null ? props.cssVars['--accent-color'] : props.color},
-    ...{'--accent-color2': props.highlightColor == null ? props.cssVars['--accent-color2'] : props.highlightColor}
   };
 });
 
-const emits = defineEmits(['close']);
+const emits = defineEmits(['close', 'location-selected']);
 
 const showSplashScreen = defineModel({ default: true });
+const searchErrorMessage = ref<string | null>(null);
 
+const geocodingOptions = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
+};
+
+function searchProvider(text: string): Promise<MapBoxFeatureCollection> {
+  return geocodingInfoForSearch(text, geocodingOptions);
+}
+
+function handleLocationSet(feature: MapBoxFeature) {
+  const location = {
+    longitudeDeg: feature.center[0],
+    latitudeDeg: feature.center[1]
+  };
+  emits('location-selected', location);
+  searchErrorMessage.value = null;
+}
 
 function closeSplashScreen() {
   showSplashScreen.value = false;
@@ -185,6 +220,29 @@ function closeSplashScreen() {
     // margin-top: 5%;
     // margin-bottom: 2%;
     font-weight: bold !important;
+  }
+
+  #location-input-section {
+    margin: 1.5rem auto;
+    width: 80%;
+    
+    .location-prompt {
+      font-size: calc(1.2 * var(--default-font-size));
+      margin-bottom: 1rem;
+      color: #E0E0E0;
+    }
+    
+    .splash-location-search {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .error-message {
+      color: #ff6b6b;
+      font-size: calc(0.9 * var(--default-font-size));
+      margin-top: 0.5rem;
+    }
   }
 
   #splash-screen-guide {

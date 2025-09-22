@@ -15,6 +15,7 @@
     title="Seasons"
     :cssVars="cssVars"
     @close="closeSplashScreen"
+    @location-selected="setLocationFromSplash"
   />
 
     <transition name="fade">
@@ -589,6 +590,16 @@ function setLocationFromFeature(feature: MapBoxFeature) {
 function setLocationFromSearchFeature(feature: MapBoxFeature) {
   setLocationFromFeature(feature);
   userSelectedSearchLocations.push(feature.center);
+}
+
+function setLocationFromSplash(location: { latitudeDeg: number, longitudeDeg: number }) {
+  selectedLocation.value = location;
+  getTextForLocation(location.longitudeDeg, location.latitudeDeg).then(text => {
+    selectedLocationText.value = text;
+  }).catch(_err => {
+    searchErrorMessage.value = "An error occurred while searching";
+  });
+  userSelectedSearchLocations.push([location.longitudeDeg, location.latitudeDeg]);
 }
 
 async function updateSelectedLocationText() {
