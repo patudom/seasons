@@ -145,9 +145,9 @@
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
-        :useInline="xs"
         :maxSpeed="10000"
         show-text
+        hideMoreControls="true"
         @reset="() => {
           selectedTime = Date.now();
           wwtStats.timeResetCount += 1;
@@ -392,7 +392,7 @@ const wwtSettings: Settings = Settings.get_active();
 useWWTKeyboardControls(store);
 
 const touchscreen = supportsTouchscreen();
-const { smAndDown, xs } = useDisplay();
+const { smAndDown } = useDisplay();
 
 const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
@@ -405,7 +405,6 @@ const positionSet = ref(false);
 
 const tab = ref(0);
 
-const datePickerOpen = ref(false);
 const playing = ref(false);
 const showLocationSelector = ref(false);
 
@@ -613,7 +612,7 @@ setInterval(() => {
   }
 }, 50);
 
-const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+const { selectedTimezone, selectedTimezoneOffset } = useTimezone(selectedLocation);
   
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
@@ -643,24 +642,6 @@ const selectedLocaledTimeDateString = computed(() => {
 //   console.log(`Test Sun Rising: ${new Date(testRising)}`);
 //   console.log(`Test Sun Setting: ${new Date(testSetting)}`);
 // }
-
-const localSelectedDate = computed({
-  // if you console log this date it will still say the local timezone 
-  // as determined by the browser Intl.DateTimeFormat().resolvedOptions().timeZone
-  // but we have manually offset it so the hours are correct for the selected timezone
-  get: () => {
-    const time = selectedTime.value;
-    const fakeUTC = time + browserTimezoneOffset;
-    return new Date(fakeUTC + selectedTimezoneOffset.value);
-  },
-  set: (value: Date) => {
-    // get local time
-    const time = value.getTime();
-    // undo fake localization
-    const newTime = time - selectedTimezoneOffset.value - browserTimezoneOffset;
-    selectedTime.value = new Date(newTime).getTime();
-  }
-});
 
 const MAX_ZOOM = 500;
 
@@ -698,7 +679,7 @@ const isLoading = computed(() => !ready.value);
 
 /* Properties related to device/screen characteristics */
 const smallSize = computed(() => smAndDown.value);
-const mobile = computed(() => smallSize.value && touchscreen);
+// const mobile = computed(() => smallSize.value && touchscreen);
 
 /* This lets us inject component data into element CSS */
 const cssVars = computed(() => {
