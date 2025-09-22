@@ -23,13 +23,14 @@
           tabindex="0"
           />
         <div id="splash-screen-text">
-          <p>Want to see the</p>
-          <p class="highlight">{{ title }}?</p>
+          <p>The Sun's</p>
+          <p>Seasonal</p>
+          <p>Journey</p>
         </div>
       </div>
 
       <div id="location-input-section">
-        <p class="location-prompt">Enter a location to get started:</p>
+        <p class="location-prompt">Enter a location:</p>
         <location-search
           :class="['splash-location-search']"
           small
@@ -224,7 +225,7 @@ function closeSplashScreen() {
 
   #location-input-section {
     margin: 1.5rem auto;
-    width: 80%;
+    width: 100%;
     
     .location-prompt {
       font-size: calc(1.2 * var(--default-font-size));
@@ -236,6 +237,36 @@ function closeSplashScreen() {
       width: 100%;
       max-width: 400px;
       margin: 0 auto;
+
+      // Make the v-field width match the v-input width
+
+      .v-field {
+        padding: 0 !important;
+      }
+      
+      .v-field__field {
+        width: 100% !important;
+      }
+
+      .v-field__input {
+        padding: 0 !important;
+      }
+      
+      .v-input__control {
+        width: 100% !important;
+        pointer-events: auto !important;
+        cursor: text !important;
+      }
+
+      // Make sure the input element itself is full width
+      input {
+        width: 100% !important;
+        height: 100% !important;
+        pointer-events: auto !important;
+        cursor: text !important;
+        padding: 0;
+      }
+      
     }
     
     .error-message {
