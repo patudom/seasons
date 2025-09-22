@@ -114,8 +114,8 @@
           :key="index"
           @click="selectedEvent = event;"
         >
-          <div>{{ eventName(event) }}</div>
           <div>{{ dayString(value.date) }}</div>
+          <div>{{ eventName(event) }}</div>
         </button>
       </div>
     </div>
@@ -458,13 +458,13 @@ const selectedEvent = ref<EventOfInterest | null>(null);
 function eventName(event: EventOfInterest): string {
   switch (event) {
   case "mar_equinox":
-    return "March Equinox";
+    return "Equinox";
   case "jun_solstice":
-    return "June Solstice";
+    return "Solstice";
   case "sep_equinox":
-    return "September Equinox";
+    return "Equinox";
   case "dec_solstice":
-    return "December Solstice";
+    return "Solstice";
   }
 }
 
