@@ -46,7 +46,9 @@
           {{ searchErrorMessage }}
         </div>
       </div>
-
+      <div>
+        <p class="medium">or</p>
+      </div>
       <div>
         <v-btn
           class="splash-get-started"
@@ -58,7 +60,7 @@
           variant="elevated"
           rounded="lg"
         >
-          Get Started
+          Use Cambridge, MA
         </v-btn>
       </div>
     
@@ -170,6 +172,15 @@ function closeSplashScreen() {
     margin-inline: auto;
     text-align: center;
   }
+  
+  // Make the div containing the Get Started button only as tall as the button
+  div:has(.splash-get-started) {
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+  }
   // make a paragraph inside the div centered horizontally and vertically
   p {
     font-family: 'Highway Gothic Narrow', 'Roboto', sans-serif;
@@ -186,6 +197,10 @@ function closeSplashScreen() {
   p.small {
     font-size: var(--default-font-size);
     font-weight: bold;
+  }
+
+  p.medium {
+    font-size: 20px;
   }
 
   #first-splash-row {
@@ -217,14 +232,15 @@ function closeSplashScreen() {
 
   .splash-get-started {
     border: 2px solid white;
-    font-size: calc(1.8 * var(--default-font-size));
+    font-size: calc(1.5 * var(--default-font-size));
     // margin-top: 5%;
     // margin-bottom: 2%;
     font-weight: bold !important;
+    text-transform: none !important;
   }
 
   #location-input-section {
-    margin: 1.5rem auto;
+    margin: 1rem auto;
     width: 100%;
     
     .location-prompt {
