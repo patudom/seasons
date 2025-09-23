@@ -416,10 +416,18 @@ const showHorizon = ref(true);
 const currentDate = new Date();
 const currentYear = currentDate.getUTCFullYear();
 const datesOfInterest = Seasons(currentYear);
-const datesBeforeNow = Object.entries(datesOfInterest).filter(([_key, value]: [string, AstroTime]) => value.date < currentDate).map(entry => entry[0]);
-if (datesBeforeNow.length > 0) {
+
+// Find dates that have passed and sort them by date
+const pastEvents = Object.entries(datesOfInterest)
+  .filter(([_key, value]: [string, AstroTime]) => value.date < currentDate)
+  .sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+
+// If we have more than 1 past event, replace the older ones with next year's events
+// Keep only the most recent past event as our starting point
+if (pastEvents.length > 1) {
   const nextSeasonsInfo = Seasons(currentYear + 1);
-  datesBeforeNow.forEach(key => {
+  const eventsToReplace = pastEvents.slice(0, -1); // All except the most recent past event
+  eventsToReplace.forEach(([key]) => {
     datesOfInterest[key] = nextSeasonsInfo[key];
   });
 }
