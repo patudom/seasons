@@ -556,7 +556,6 @@ function dayString(date: Date) {
 function goToEvent(event: EventOfInterest) {
   const day = datesOfInterest[event].date;
   const time = day.getTime();
-  console.log(time);
 
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
