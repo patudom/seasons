@@ -397,8 +397,7 @@ const { smAndDown } = useDisplay();
 
 const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
-const accentColorReady = computed(() => selectedEvent.value !== null);
-const splashReady = computed(() => splash && accentColorReady.value);
+const splashReady = computed(() => splash && selectedEvent.value !== null);
 const backgroundImagesets = reactive<BackgroundImageset[]>([]);
 const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
@@ -741,7 +740,6 @@ const showVideoSheet = computed({
   This is convenient if there's any other logic that we want to run
   when the splash screen is closed
 */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function closeSplashScreen() {
   showSplashScreen.value = false;
 }
