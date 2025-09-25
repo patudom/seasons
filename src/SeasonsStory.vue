@@ -10,38 +10,13 @@
       
 
     <!-- This contains the splash screen content -->
-
-    <v-overlay
-      :model-value="showSplashScreen"
-      absolute
-      opacity="0.6"
-      :style="cssVars"
-      id="splash-overlay"
-    >
-      <div
-        id="splash-screen"
-        v-click-outside="closeSplashScreen"
-        :style="cssVars"
-      >
-        <font-awesome-icon
-          id="close-splash-button"
-          @click="closeSplashScreen"
-          @keyup.enter="closeSplashScreen"
-          icon="xmark"
-          tabindex="0"
-        />
-        <div id="splash-screen-text">
-          <p>Splash Screen Content</p>
-        </div>
-        <div id="splash-screen-acknowledgements" class="small">
-          This Data Story is brought to you by <a href="https://www.cosmicds.cfa.harvard.edu/" target="_blank" rel="noopener noreferrer">Cosmic Data Stories</a> and <a href="https://www.worldwidetelescope.org/home/" target="_blank" rel="noopener noreferrer">WorldWide Telescope</a>.
-          
-          <div id="splash-screen-logos">
-            <credit-logos logo-size="5vmin"/>
-          </div>
-        </div>
-      </div>
-    </v-overlay>
+  <splash-screen
+    v-if="splashReady"
+    title="Seasons"
+    :cssVars="cssVars"
+    @close="closeSplashScreen"
+    @location-selected="setLocationFromSearchFeature"
+  />
 
     <transition name="fade">
       <div
@@ -64,16 +39,8 @@
         <icon-button
           v-model="showTextSheet"
           fa-icon="book-open"
-          :color="buttonColor"
+          :color="accentColor"
           :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
-          tooltip-location="start"
-        >
-        </icon-button>
-        <icon-button
-          v-model="showVideoSheet"
-          fa-icon="video"
-          :color="buttonColor"
-          tooltip-text="Watch video"
           tooltip-location="start"
         >
         </icon-button>
@@ -82,7 +49,7 @@
         <icon-button
           v-model="showLocationSelector"
           fa-icon="location-dot"
-          :color="buttonColor"
+          :color="accentColor"
           tooltip-text="Select Location"
           tooltip-location="start"
         ></icon-button>
@@ -127,16 +94,8 @@
               :model-value="selectedLocation"
               @update:modelValue="updateLocationFromMap"
             />
-
           </v-card>
         </v-dialog>
-        <icon-button
-          @activate="() => resetView()"
-          fa-icon="sun"
-          :color="buttonColor"
-          tooltip-text="Reset view"
-          tooltip-location="end"
-        ></icon-button>
       </div>
       <div id="right-buttons">
         <div class="location-date-display">
@@ -149,14 +108,6 @@
             variant="flat"
             @click="showLocationSelector = true"
           > </v-chip>
-          <v-chip 
-            :color="accentColor"
-            :prepend-icon="smallSize ? `` : `mdi-clock`"
-            size="small"
-            elevation="1"
-            :text="selectedLocaledTimeDateString"
-            variant="flat"
-          > </v-chip>
         </div>
         <button
           :class="[event === selectedEvent ? 'selected' : '']"
@@ -164,10 +115,10 @@
           v-ripple
           class="event-button"
           :key="index"
-          @click="selectedEvent = event"
+          @click="selectedEvent = event;"
         >
-          <div>{{ eventName(event) }}</div>
           <div>{{ dayString(value.date) }}</div>
+          <div>{{ eventName(event) }}</div>
         </button>
       </div>
     </div>
@@ -175,47 +126,20 @@
     <!-- This block contains the elements (e.g. the project icons) displayed along the bottom of the screen -->
 
     <div id="bottom-content">
-      <div id="date-picker">
-        <v-overlay 
-          v-model="datePickerOpen"
-          activator="parent"
-          location-strategy="connected"
-          location="top end"
-          origin="bottom end"
-          :scrim="false"
-          :style="cssVars"
-        >
-        <template #activator="{props}">
-          <!-- any props added are passed directly to v-card -->
-          <v-card 
-            v-bind="props"
-            class="td__card"
-            width="fit-content"
-            rounded="lg"
-            tabindex="0"
-            @keyup.enter="props.onClick"
-            >
-            <time-display class="bsn__time" :date="localSelectedDate" ampm :short-time-date="true" show-timezone :timezone="shortTimezone" />
-            <v-icon v-if="!(smAndDown || mobile)" class="td__icon"  >mdi-cursor-default-click</v-icon>
-          </v-card>
-        </template>
-          <v-card ref="dtpCard" tabindex="0" width="fit-content" elevation="5">
-            <v-icon tabindex="0" class="dtp-close-button" @click="datePickerOpen=false" @keyup.enter="datePickerOpen=false" :color="accentColor" size="18">mdi-close</v-icon>
-            <date-time-picker tabindex="0" v-model="localSelectedDate" :editable-time="true">
-              <!-- <button class="dtp__button" @click="() => {playbackControl.pause(); set9pm(); goToTCrB()}" name="set-9pm" aria-label="Set time to 9pm">9pm</button>
-              <button class="dtp__button" @click="() => {playbackControl.pause(); setMidnight(); goToTCrB()}" name="set-midnight" aria-label="Set time to Midnight">Midnight</button>-->
-              <button class="dtp__button" @click="() => {selectedTime = Date.now()}" name="set-now" aria-label="Set time to Now">Now</button> 
-            </date-time-picker>
-          </v-card>
-        </v-overlay>
-      </div>
 
       <v-slider
         v-model="sliderValue"
         :color="accentColor"
         :min="sliderMin"
         :max="sliderMax"
+        thumb-label="always"
+        class="time-slider"
       >
+        <template v-slot:thumb-label>
+          <div class="thumb-label">
+            {{ selectedLocaledTimeDateString }}
+          </div>
+        </template>
       </v-slider>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
@@ -224,9 +148,9 @@
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
-        :useInline="xs"
         :maxSpeed="10000"
         show-text
+        hideMoreControls="true"
         @reset="() => {
           selectedTime = Date.now();
           wwtStats.timeResetCount += 1;
@@ -471,19 +395,18 @@ const wwtSettings: Settings = Settings.get_active();
 useWWTKeyboardControls(store);
 
 const touchscreen = supportsTouchscreen();
-const { smAndDown, xs } = useDisplay();
+const { smAndDown } = useDisplay();
 
 const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
+const splashReady = computed(() => splash && selectedEvent.value !== null);
 const backgroundImagesets = reactive<BackgroundImageset[]>([]);
 const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
 const positionSet = ref(false);
-const accentColor = ref("#90D5FF");
-const buttonColor = ref("#ffffff");
+
 const tab = ref(0);
 
-const datePickerOpen = ref(false);
 const playing = ref(false);
 const showLocationSelector = ref(false);
 
@@ -494,10 +417,18 @@ const showHorizon = ref(true);
 const currentDate = new Date();
 const currentYear = currentDate.getUTCFullYear();
 const datesOfInterest = Seasons(currentYear);
-const datesBeforeNow = Object.entries(datesOfInterest).filter(([_key, value]: [string, AstroTime]) => value.date < currentDate).map(entry => entry[0]);
-if (datesBeforeNow.length > 0) {
+
+// Find dates that have passed and sort them by date
+const pastEvents = Object.entries(datesOfInterest)
+  .filter(([_key, value]: [string, AstroTime]) => value.date < currentDate)
+  .sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+
+// If we have more than 1 past event, replace the older ones with next year's events
+// Keep only the most recent past event as our starting point
+if (pastEvents.length > 1) {
   const nextSeasonsInfo = Seasons(currentYear + 1);
-  datesBeforeNow.forEach(key => {
+  const eventsToReplace = pastEvents.slice(0, -1); // All except the most recent past event
+  eventsToReplace.forEach(([key]) => {
     datesOfInterest[key] = nextSeasonsInfo[key];
   });
 }
@@ -532,20 +463,65 @@ const EVENTS_OF_INTEREST = [
 ] as const;
 type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
 
-const selectedEvent = ref<EventOfInterest>(EVENTS_OF_INTEREST[0]);
+const selectedEvent = ref<EventOfInterest | null>(null);
 
 function eventName(event: EventOfInterest): string {
   switch (event) {
   case "mar_equinox":
-    return "March Equinox";
+    return "Equinox";
   case "jun_solstice":
-    return "June Solstice";
+    return "Solstice";
   case "sep_equinox":
-    return "September Equinox";
+    return "Equinox";
   case "dec_solstice":
-    return "December Solstice";
+    return "Solstice";
   }
 }
+
+function getCurrentSeason(event: string, latitude: number): 'spring' | 'summer' | 'autumn' | 'winter' {
+
+  if (latitude >= 0) {
+    switch (event) {
+    case "mar_equinox":
+      return "spring";
+    case "jun_solstice":
+      return "summer";
+    case "sep_equinox":
+      return "autumn";
+    case "dec_solstice":
+      return "winter";      
+    }
+  } else {
+    switch (event) {
+    case "mar_equinox":
+      return "autumn";
+    case "jun_solstice":
+      return "winter";
+    case "sep_equinox":
+      return "spring";
+    case "dec_solstice":
+      return "summer";      
+    }
+  }
+  return "spring"; // fallback
+}
+
+const seasonalColors = {
+  spring: '#FFA0D7',  
+  summer: '#F7EB67',  
+  autumn: '#FEB770',  
+  winter: '#91C2F9'   
+};
+
+const accentColor = computed(() => {
+  const event = selectedEvent.value;
+  if (!event) {
+    return seasonalColors.spring;
+  }
+  const latitude = selectedLocation.value.latitudeDeg;
+  const currentSeason = getCurrentSeason(event, latitude);
+  return seasonalColors[currentSeason];
+});
 
 function dayString(date: Date) {
   return date.toLocaleString("en-US", {
@@ -603,8 +579,6 @@ const geocodingOptions = {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
 };
-
-
 
 let userSelectedMapLocations: [number, number][] = [];
 let userSelectedSearchLocations: [number, number][] = [];
@@ -670,7 +644,7 @@ setInterval(() => {
   }
 }, 50);
 
-const { selectedTimezone, selectedTimezoneOffset, shortTimezone, browserTimezoneOffset } = useTimezone(selectedLocation);
+const { selectedTimezone, selectedTimezoneOffset } = useTimezone(selectedLocation);
   
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
@@ -681,7 +655,7 @@ const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
 });
 
 const selectedLocaledTimeDateString = computed(() => {
-  const formatString = smallSize.value ? "MM/dd, h:mm:ss aa" : "MM/dd/yyyy h:mm:ss aa (zzz)";
+  const formatString = "h:mm aa (zzz)";
   return formatInTimeZone(selectedTime.value, selectedTimezone.value, formatString);
 });
 
@@ -700,24 +674,6 @@ const selectedLocaledTimeDateString = computed(() => {
 //   console.log(`Test Sun Rising: ${new Date(testRising)}`);
 //   console.log(`Test Sun Setting: ${new Date(testSetting)}`);
 // }
-
-const localSelectedDate = computed({
-  // if you console log this date it will still say the local timezone 
-  // as determined by the browser Intl.DateTimeFormat().resolvedOptions().timeZone
-  // but we have manually offset it so the hours are correct for the selected timezone
-  get: () => {
-    const time = selectedTime.value;
-    const fakeUTC = time + browserTimezoneOffset;
-    return new Date(fakeUTC + selectedTimezoneOffset.value);
-  },
-  set: (value: Date) => {
-    // get local time
-    const time = value.getTime();
-    // undo fake localization
-    const newTime = time - selectedTimezoneOffset.value - browserTimezoneOffset;
-    selectedTime.value = new Date(newTime).getTime();
-  }
-});
 
 const MAX_ZOOM = 500;
 
@@ -739,6 +695,7 @@ onMounted(() => {
 
     doWWTModifications();
 
+    // Set the initial event after everything is ready
     selectedEvent.value = sortedDatesOfInterest.value[0][0];
 
     // If there are layers to set up, do that here!
@@ -754,7 +711,7 @@ const isLoading = computed(() => !ready.value);
 
 /* Properties related to device/screen characteristics */
 const smallSize = computed(() => smAndDown.value);
-const mobile = computed(() => smallSize.value && touchscreen);
+// const mobile = computed(() => smallSize.value && touchscreen);
 
 /* This lets us inject component data into element CSS */
 const cssVars = computed(() => {
@@ -903,7 +860,11 @@ watch(selectedTime, (time: number) => {
   resetView(store.zoomDeg);
 });
 
-watch(selectedEvent, goToEvent);
+watch(selectedEvent, (event: EventOfInterest | null) => {
+  if (event) {
+    goToEvent(event);
+  }
+});
 </script>
 
 <style lang="less">
@@ -1032,6 +993,9 @@ body {
 }
 
 #center-buttons {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   gap: 5px;
@@ -1275,6 +1239,26 @@ video {
 .v-slider {
   width: 90%;
   pointer-events: auto;
+}
+
+.time-slider {
+
+  .v-slider-thumb {
+
+    .v-slider-thumb__label {
+      color: white;
+      background-color: black;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      width: max-content;
+      height: 2.5rem;
+      font-size: 1rem;
+
+      &::before {
+        color: var(--accent-color);
+      }
+    }
+  }
 }
 
 #geolocation-close {
