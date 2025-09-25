@@ -141,11 +141,13 @@
       <div id="right-buttons">
         <div class="location-date-display">
           <v-chip 
+            id="location-chip"
             :color="accentColor"
             size="small"
             elevation="3"
             :text="selectedLocationText"
             variant="flat"
+            @click="showLocationSelector = true"
           > </v-chip>
           <v-chip 
             :color="accentColor"
@@ -1297,5 +1299,9 @@ video {
   .v-chip {
     width: fit-content;
   }
+}
+
+#location-chip {
+  pointer-events: auto;
 }
 </style>
