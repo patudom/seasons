@@ -140,14 +140,14 @@
       </div>
       <div id="right-buttons">
         <div class="location-date-display">
-          <v-chip 
+          <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+          <v-chip v-html="selectedLocationText"
             id="location-chip"
             :color="accentColor"
             size="small"
             elevation="3"
             variant="flat"
             @click="showLocationSelector = true"
-            v-html="selectedLocationText"
           > </v-chip>
           <v-chip 
             :color="accentColor"
