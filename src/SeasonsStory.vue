@@ -140,12 +140,14 @@
       </div>
       <div id="right-buttons">
         <div class="location-date-display">
-          <v-chip 
+          <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+          <v-chip v-html="selectedLocationText"
+            id="location-chip"
             :color="accentColor"
             size="small"
             elevation="3"
-            :text="selectedLocationText"
             variant="flat"
+            @click="showLocationSelector = true"
           > </v-chip>
           <v-chip 
             :color="accentColor"
@@ -606,9 +608,25 @@ function updateLocationFromMap(location: LocationDeg) {
   userSelectedMapLocations.push([location.latitudeDeg, location.longitudeDeg]);
 }
 
-function getTextForLocation(longitudeDeg: number, latitudeDeg: number): Promise<string> {
+function latLonText(longitudeDeg: number, latitudeDeg: number): string {
+  const ns = latitudeDeg >= 0 ? 'N' : 'S';
+  const ew = longitudeDeg >= 0 ? 'E' : 'W';
+  const lat = Math.abs(latitudeDeg).toFixed(3);
+  const lon = Math.abs(longitudeDeg).toFixed(3);
+  return `${lat}° ${ns}, ${lon}° ${ew}`;
+}
+
+async function getTextForLocation(longitudeDeg: number, latitudeDeg: number): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  return textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
+  let text = await textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
+  if (!startsWithNumber(text)) {
+    text =`${text}<br/>${latLonText(longitudeDeg, latitudeDeg)}`;
+  }
+  return text;
+}
+
+function startsWithNumber(text: string): boolean {
+  return text.charAt(0).match(/[0-9]|-/) !== null;
 }
 
 function setLocationFromFeature(feature: MapBoxFeature) {
@@ -1297,5 +1315,11 @@ video {
   .v-chip {
     width: fit-content;
   }
+}
+
+#location-chip {
+  pointer-events: auto;
+  height: fit-content;
+  text-align: center;
 }
 </style>
