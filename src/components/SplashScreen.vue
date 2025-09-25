@@ -116,11 +116,7 @@ function searchProvider(text: string): Promise<MapBoxFeatureCollection> {
 }
 
 function handleLocationSet(feature: MapBoxFeature) {
-  const location = {
-    longitudeDeg: feature.center[0],
-    latitudeDeg: feature.center[1]
-  };
-  emits('location-selected', location);
+  emits('location-selected', feature);
   searchErrorMessage.value = null;
 }
 
