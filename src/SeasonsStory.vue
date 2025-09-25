@@ -556,20 +556,27 @@ function dayString(date: Date) {
 function goToEvent(event: EventOfInterest) {
   const day = datesOfInterest[event].date;
   const time = day.getTime();
+  console.log(time);
 
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
+  let start: Date;
+  let end: Date;
   if (dayStart === null || dayEnd === null) {
-    return;
+    start = new Date(time); 
+    start.setHours(0, 0, 0, 0);
+    start = new Date(start.getTime() - selectedTimezoneOffset.value);
+    end = new Date(start.getTime() + 86400000 - 60);
+  } else {
+    start = new Date(dayStart);
+    end = new Date(dayEnd);
   }
 
-  const start = new Date(dayStart);
   store.setTime(new Date(time));
   const timeStart = start.getTime();
   selectedTime.value = timeStart;
   startTime.value = timeStart; // - timeStart % (24 * 60 * 60 * 1000) - selectedTimezoneOffset.value; // round down to the start of the day
 
-  const end = new Date(dayEnd);
   endTime.value = end.getTime();
 
   setTimeout(() => resetView(), 100);
