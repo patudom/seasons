@@ -352,6 +352,8 @@
 import { ref, reactive, computed, markRaw, onMounted, nextTick, watch } from "vue";
 import { useDisplay } from "vuetify";
 import { storeToRefs } from "pinia";
+import { getTimezoneOffset } from "date-fns-tz";
+import tzlookup from "tz-lookup";
 
 import { AstroTime, Seasons } from "astronomy-engine";
 
@@ -551,7 +553,7 @@ function getStartAndEndTimes(event: EventOfInterest): [Date, Date] {
   return [start, end];
 }
 
-function onTimezoneOffsetUpdate(newOffset: number, oldOffset: number) {
+function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg) {
   if (selectedEvent.value === null) {
     return;
   }
@@ -559,8 +561,12 @@ function onTimezoneOffsetUpdate(newOffset: number, oldOffset: number) {
   startTime.value = start.getTime();
   endTime.value = end.getTime();
 
-  const diff = oldOffset - newOffset;
-  selectedTime.value += diff;
+  const oldOffset = getTimezoneOffset(tzlookup(oldLocation.latitudeDeg, oldLocation.longitudeDeg));
+
+  const diff = oldOffset - selectedTimezoneOffset.value;
+  let newSelectedTime = selectedTime.value + diff;
+  newSelectedTime = Math.min(Math.max(startTime.value, newSelectedTime), endTime.value);
+  selectedTime.value = newSelectedTime;
 }
 
 function goToEvent(event: EventOfInterest) {
@@ -869,9 +875,10 @@ function doWWTModifications() {
   Planets.drawPlanets = drawPlanets;
 }
 
-watch(selectedLocation, (location: LocationDeg) => {
+watch(selectedLocation, (location: LocationDeg, oldLocation: LocationDeg) => {
   updateSelectedLocationText();
   updateWWTLocation(location);
+  updateSliderBounds(location, oldLocation);
   WWTControl.singleton.renderOneFrame();
 });
 
@@ -885,8 +892,6 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
     goToEvent(event);
   }
 });
-
-watch(selectedTimezoneOffset, onTimezoneOffsetUpdate);
 </script>
 
 <style lang="less">
