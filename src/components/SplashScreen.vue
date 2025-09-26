@@ -156,7 +156,7 @@ function closeSplashScreen() {
   backdrop-filter: blur(5px);
   justify-content: space-around;
   align-content: center;
-  padding-top: 2rem;
+  padding-top: 1rem;
   padding-bottom: 1rem;
 
   border-radius: 30px;
@@ -246,7 +246,7 @@ function closeSplashScreen() {
     }
     
     .splash-location-search {
-      width: 100%;
+      width: 75%;
       max-width: 400px;
       margin: 0 auto;
 
@@ -306,7 +306,7 @@ function closeSplashScreen() {
 
   #splash-screen-acknowledgements {
     // margin-top: 3rem;
-    margin: clamp(0.5rem, 3vh, 3rem) auto;
+    margin-top: clamp(0.5rem, 3vh, 3rem);
     font-size: calc(1.7 * var(--default-font-size));
     line-height: calc(1.5 * var(--default-line-height));
     width: 60%; 
