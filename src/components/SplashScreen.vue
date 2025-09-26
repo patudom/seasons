@@ -342,6 +342,9 @@ function closeSplashScreen() {
   #splash-screen p.medium {
     font-size: 14px;
   }
+  #splash-screen-text p {
+    font-size: 20pt;
+  }
 }
 
 @media (max-height: 500px) {
