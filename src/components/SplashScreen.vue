@@ -23,9 +23,7 @@
           tabindex="0"
           />
         <div id="splash-screen-text">
-          <p>The Sun's</p>
-          <p>Seasonal</p>
-          <p>Journey</p>
+          <p>The Sun's Seasonal Journey</p>
         </div>
       </div>
 
@@ -223,6 +221,12 @@ function closeSplashScreen() {
     display: flex;
     flex-direction: column;
     line-height: 130%;
+
+    p {
+      width: 80%;
+      text-align: center;
+      margin: auto;
+    }
     
   }
 
@@ -334,6 +338,12 @@ function closeSplashScreen() {
   }
 }
 
+@media (max-height: 600px) {
+  #splash-screen p.medium {
+    font-size: 14px;
+  }
+}
+
 @media (max-height: 500px) {
   #splash-screen {
     // display: flex;
@@ -344,20 +354,19 @@ function closeSplashScreen() {
     // gap: calc(0.5 * var(--default-line-height));
     overflow: hidden;
   
-  #splash-screen-text {
-    line-height: 75%;
+    #splash-screen-text {
+      line-height: 75%;
+    }
+    
+    .splash-get-started {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    
+    #splash-screen-acknowledgements {
+      font-size: calc(1.5 * var(--default-font-size));
+    }
   }
-  
-  .splash-get-started {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-  
-  #splash-screen-acknowledgements {
-    font-size: calc(1.5 * var(--default-font-size));
-  }
-}
-  
 }
 
 @media (max-height: 310px) {
