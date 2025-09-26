@@ -531,10 +531,9 @@ function dayString(date: Date) {
   });
 }
 
-function goToEvent(event: EventOfInterest) {
+function getStartAndEndTimes(event: EventOfInterest): [Date, Date] {
   const day = datesOfInterest[event].date;
   const time = day.getTime();
-
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
   let start: Date;
@@ -548,6 +547,27 @@ function goToEvent(event: EventOfInterest) {
     start = new Date(dayStart);
     end = new Date(dayEnd);
   }
+
+  return [start, end];
+}
+
+function onTimezoneOffsetUpdate(newOffset: number, oldOffset: number) {
+  if (selectedEvent.value === null) {
+    return;
+  }
+  const [start, end] = getStartAndEndTimes(selectedEvent.value);
+  startTime.value = start.getTime();
+  endTime.value = end.getTime();
+
+  const diff = oldOffset - newOffset;
+  selectedTime.value += diff;
+}
+
+function goToEvent(event: EventOfInterest) {
+  const day = datesOfInterest[event].date;
+  const time = day.getTime();
+
+  const [start, end] = getStartAndEndTimes(event);
 
   store.setTime(new Date(time));
   const timeStart = start.getTime();
@@ -865,6 +885,8 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
     goToEvent(event);
   }
 });
+
+watch(selectedTimezoneOffset, onTimezoneOffsetUpdate);
 </script>
 
 <style lang="less">
