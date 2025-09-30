@@ -199,9 +199,9 @@
         </icon-button>
       -->
       </div>
-      <div id="body-logos" v-if="!smallSize">
-        <credit-logos/>
-      </div>
+    </div>
+    <div id="body-logos" v-if="!smallSize">
+      <credit-logos/>
     </div>
 
 
@@ -777,7 +777,7 @@ function resetView(zoomDeg?: number) {
 
   const sunAltAz = getSunPositionAtTime(time);
   const sunAz = sunAltAz.azRad;
-  const startAlt = (smallSize.value ? 20 : 25) * D2R;
+  const startAlt = (smallSize.value ? 33 : 33) * D2R;
   const startRADec = horizontalToEquatorial(
     startAlt,
     sunAz,
@@ -828,7 +828,7 @@ function doWWTModifications() {
 
   const originalUpdatePlanetLocations = Planets.updatePlanetLocations;
   const planetScales = [
-    8,  // Sun
+    4,  // Sun
     1.25,  // Mercury
     1.25,  // Venus
     1.25,  // Mars
@@ -1311,5 +1311,15 @@ video {
   pointer-events: auto;
   height: fit-content;
   text-align: center;
+}
+
+#body-logos {
+  position: absolute;
+  right: 0.1em;
+  bottom: 0.1em;
+
+  img {
+    height: 48px;
+  }
 }
 </style>
