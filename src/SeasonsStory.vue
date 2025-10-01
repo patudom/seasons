@@ -209,7 +209,9 @@
       </div>
     </div>
     <div id="body-logos" v-if="!smallSize">
-      <credit-logos/>
+      <credit-logos
+        :default-logos="['cosmicds', 'wwt', 'sciact', 'nasa']"
+      />
     </div>
 
 
@@ -1376,11 +1378,11 @@ video {
 
 #body-logos {
   position: absolute;
-  right: 0.1em;
+  right: 0.5em;
   bottom: 0.1em;
 
   img {
-    height: 48px;
+    height: 36px;
   }
 }
 </style>
