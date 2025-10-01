@@ -139,8 +139,12 @@ function closeSplashScreen() {
 #splash-screen {
   color: #E0E0E0;
 
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+
   @media (max-width: 699px) {
-    max-height: 80vh;
+    max-height: 85vh;
     max-width: 90vw;
   }
 
