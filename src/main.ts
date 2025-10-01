@@ -32,6 +32,7 @@ import {
   faTimes,
   faVideo,
   faXmark,
+  faInfo,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(faBookOpen);
@@ -40,6 +41,7 @@ library.add(faSun);
 library.add(faTimes);
 library.add(faVideo);
 library.add(faXmark);
+library.add(faInfo);
 
 /** v-hide directive taken from https://www.ryansouthgate.com/2020/01/30/vue-js-v-hide-element-whilst-keeping-occupied-space/ */
 // Extract the function out, up here, so I'm not writing it twice
