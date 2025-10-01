@@ -160,7 +160,7 @@
         show-text
         hideMoreControls="true"
         @reset="() => {
-          selectedTime = Date.now();
+          selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
         }"
         @update:reverse="(_reverse: boolean) => {
