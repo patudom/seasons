@@ -1264,7 +1264,7 @@ video {
 }
 
 .v-slider {
-  width: 90%;
+  width: 80%;
   pointer-events: auto;
 }
 
@@ -1278,8 +1278,8 @@ video {
       border: 2px solid var(--accent-color);
       border-radius: 5px;
       width: max-content;
-      height: 2.5rem;
-      font-size: 1rem;
+      height: calc(2.5 * var(--default-font-size));
+      font-size: var(--default-font-size);
 
       &::before {
         color: var(--accent-color);
