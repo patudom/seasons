@@ -112,6 +112,11 @@
 
       </div>
       <div id="right-buttons">
+        <div
+          class="event-title"
+        >
+          <h4>Displayed Date</h4>
+        </div>
         <button
           :class="[event === selectedEvent ? 'selected' : '']"
           v-for="([event, value], index) in sortedDatesOfInterest"
@@ -1274,6 +1279,13 @@ video {
     color: var(--accent-color);
     border-color: var(--accent-color);
   }
+}
+
+.event-title {
+  display: flex;
+  align-content: center;
+  color: var(--accent-color);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
 .map-container {
