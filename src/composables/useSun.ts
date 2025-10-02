@@ -1,4 +1,4 @@
-import { Ref, ref, computed, isRef, type MaybeRef, type ComputedRef } from "vue";
+import { Ref, ref, computed, isRef, type MaybeRef } from "vue";
 import { Classification, SolarSystemObjects } from "@wwtelescope/engine-types";
 import { Place} from "@wwtelescope/engine";
 import { AltAzRad, EquatorialRad, LocationDeg, LocationRad } from "../types";
@@ -20,7 +20,7 @@ type RefOrType<T> = Ref<T> | T;
 export interface UseSunOptions {
   store: WWTEngineStore;
   location: Ref<LocationDeg>;
-  selectedTime: MaybeRef<number> | MaybeRef<Date> | Ref<Date,Date>;
+  selectedTime: MaybeRef<number> | MaybeRef<Date>;
   selectedTimezoneOffset: RefOrType<number>;
   zoomLevel?: number;
   onStart?: () => void;

@@ -854,12 +854,7 @@ watch(selectedLocation, (location: LocationDeg) => {
   WWTControl.singleton.renderOneFrame();
 });
 
-// watch(selectedTime, (time: number) => {
-//   store.setTime(new Date(time)); 
-//   resetView(store.zoomDeg);
-// });
-
-watch(() => currentTime.value, (_time: Date) => {
+watch(currentTime, (_time: Date) => {
   resetView(store.zoomDeg);
 });
 
