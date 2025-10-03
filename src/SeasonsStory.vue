@@ -36,16 +36,19 @@
 
     <div id="top-content">
       <div id="left-buttons">
-        <icon-button
-          v-model="showTextSheet"
-          fa-icon="book-open"
-          :color="accentColor"
-          :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
-          tooltip-location="start"
-        >
-        </icon-button>
-      </div>
-      <div id="center-buttons">
+        <div class="location-display">
+          <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+          <button
+            id="location-button"
+            class="event-button selected"
+            @click="showLocationSelector = true"
+          > 
+          <h4 class="mb-1">View from:</h4>
+          <div>{{ selectedLocationInfo.name }}</div>
+          <div>Lat: {{ selectedLocationInfo.latitude }}</div>
+          <div>Long: {{ selectedLocationInfo.longitude }}</div>
+          </button>
+        </div>
         <icon-button
           v-model="showLocationSelector"
           fa-icon="location-dot"
@@ -96,18 +99,23 @@
             />
           </v-card>
         </v-dialog>
+        <icon-button
+          v-model="showTextSheet"
+          fa-icon="info"
+          :color="accentColor"
+          :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
+          tooltip-location="start"
+        >
+        </icon-button>
+      </div>
+      <div id="center-buttons">
+
       </div>
       <div id="right-buttons">
-        <div class="location-date-display">
-          <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
-          <v-chip v-html="selectedLocationText"
-            id="location-chip"
-            :color="accentColor"
-            size="small"
-            elevation="3"
-            variant="flat"
-            @click="showLocationSelector = true"
-          > </v-chip>
+        <div
+          class="event-title"
+        >
+          <h4>Displayed Date</h4>
         </div>
         <button
           :class="[event === selectedEvent ? 'selected' : '']"
@@ -152,7 +160,7 @@
         show-text
         hideMoreControls="true"
         @reset="() => {
-          selectedTime = Date.now();
+          selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
         }"
         @update:reverse="(_reverse: boolean) => {
@@ -199,9 +207,11 @@
         </icon-button>
       -->
       </div>
-      <div id="body-logos" v-if="!smallSize">
-        <credit-logos/>
-      </div>
+    </div>
+    <div id="body-logos" v-if="!smallSize">
+      <credit-logos
+        :default-logos="['cosmicds', 'wwt', 'sciact', 'nasa']"
+      />
     </div>
 
 
@@ -599,7 +609,7 @@ const selectedLocation = ref<LocationDeg>({
   longitudeDeg: -71.1056,
   latitudeDeg: 42.3581,
 });
-const selectedLocationText = ref("");
+const selectedLocationInfo = ref<LocationInfo>({ name: "", latitude: "", longitude: "" });
 const searchErrorMessage = ref<string | null>(null);
 const geocodingOptions = {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -614,21 +624,36 @@ function updateLocationFromMap(location: LocationDeg) {
   userSelectedMapLocations.push([location.latitudeDeg, location.longitudeDeg]);
 }
 
-function latLonText(longitudeDeg: number, latitudeDeg: number): string {
+function latText(latitudeDeg: number): string {
   const ns = latitudeDeg >= 0 ? 'N' : 'S';
-  const ew = longitudeDeg >= 0 ? 'E' : 'W';
-  const lat = Math.abs(latitudeDeg).toFixed(3);
-  const lon = Math.abs(longitudeDeg).toFixed(3);
-  return `${lat}° ${ns}, ${lon}° ${ew}`;
+  const lat = Math.abs(latitudeDeg).toFixed(2);
+  return `${lat}° ${ns}`;
 }
 
-async function getTextForLocation(longitudeDeg: number, latitudeDeg: number): Promise<string> {
+function lonText(longitudeDeg: number): string {
+  const ew = longitudeDeg >= 0 ? 'E' : 'W';
+  const lon = Math.abs(longitudeDeg).toFixed(2);
+  return `${lon}° ${ew}`;
+}
+
+interface LocationInfo {
+  name: string;
+  latitude: string;
+  longitude: string;
+}
+
+async function getLocationInfo(longitudeDeg: number, latitudeDeg: number): Promise<LocationInfo> {
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  let text = await textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
-  if (!startsWithNumber(text)) {
-    text =`${text}<br/>${latLonText(longitudeDeg, latitudeDeg)}`;
-  }
-  return text;
+  const location = await textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
+  const locationName = !startsWithNumber(location) ? `${location}` : "";
+  const formattedLat = latText(latitudeDeg);
+  const formattedLon = lonText(longitudeDeg);
+
+  return {
+    name: locationName,
+    latitude: formattedLat,
+    longitude: formattedLon,
+  };
 }
 
 function startsWithNumber(text: string): boolean {
@@ -637,8 +662,8 @@ function startsWithNumber(text: string): boolean {
 
 function setLocationFromFeature(feature: MapBoxFeature) {
   selectedLocation.value = { longitudeDeg: feature.center[0], latitudeDeg: feature.center[1] };
-  getTextForLocation(feature.center[0], feature.center[1]).then(text => {
-    selectedLocationText.value = text;
+  getLocationInfo(feature.center[0], feature.center[1]).then(locationInfo => {
+    selectedLocationInfo.value = locationInfo;
   }).catch(_err => {
     searchErrorMessage.value = "An error occurred while searching";
   });
@@ -649,8 +674,9 @@ function setLocationFromSearchFeature(feature: MapBoxFeature) {
   userSelectedSearchLocations.push(feature.center);
 }
 
-async function updateSelectedLocationText() {
-  selectedLocationText.value = await getTextForLocation(selectedLocation.value.longitudeDeg, selectedLocation.value.latitudeDeg);
+async function updateSelectedLocationInfo() {
+  const locationInfo = await getLocationInfo(selectedLocation.value.longitudeDeg, selectedLocation.value.latitudeDeg);
+  selectedLocationInfo.value = locationInfo;
 }
 
 function searchProvider(text: string): Promise<MapBoxFeatureCollection> {
@@ -704,7 +730,7 @@ const selectedLocaledTimeDateString = computed(() => {
 const MAX_ZOOM = 500;
 
 onMounted(() => {
-  updateSelectedLocationText();
+  updateSelectedLocationInfo();
   store.waitForReady().then(async () => {
     WWTControl.singleton.set_zoomMax(MAX_ZOOM);
     skyBackgroundImagesets.forEach(iset => backgroundImagesets.push(iset));
@@ -803,7 +829,7 @@ function resetView(zoomDeg?: number) {
 
   const sunAltAz = getSunPositionAtTime(time);
   const sunAz = sunAltAz.azRad;
-  const startAlt = (smallSize.value ? 20 : 25) * D2R;
+  const startAlt = (smallSize.value ? 33 : 33) * D2R;
   const startRADec = horizontalToEquatorial(
     startAlt,
     sunAz,
@@ -854,7 +880,7 @@ function doWWTModifications() {
 
   const originalUpdatePlanetLocations = Planets.updatePlanetLocations;
   const planetScales = [
-    8,  // Sun
+    4,  // Sun
     1.25,  // Mercury
     1.25,  // Venus
     1.25,  // Mars
@@ -876,7 +902,7 @@ function doWWTModifications() {
 }
 
 watch(selectedLocation, (location: LocationDeg, oldLocation: LocationDeg) => {
-  updateSelectedLocationText();
+  updateSelectedLocationInfo();
   updateWWTLocation(location);
   updateSliderBounds(location, oldLocation);
   WWTControl.singleton.renderOneFrame();
@@ -1017,6 +1043,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  align-items: flex-start;
+}
+
+#left-buttons .icon-wrapper {
+  width: 30%;
+  flex-shrink: 0;
 }
 
 #center-buttons {
@@ -1251,6 +1283,13 @@ video {
   }
 }
 
+.event-title {
+  display: flex;
+  align-content: center;
+  color: var(--accent-color);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
 .map-container {
   @media (max-width: 600px) {
     width: 90vw;
@@ -1264,7 +1303,7 @@ video {
 }
 
 .v-slider {
-  width: 90%;
+  width: 80%;
   pointer-events: auto;
 }
 
@@ -1278,8 +1317,8 @@ video {
       border: 2px solid var(--accent-color);
       border-radius: 5px;
       width: max-content;
-      height: 2.5rem;
-      font-size: 1rem;
+      height: calc(2.5 * var(--default-font-size));
+      font-size: var(--default-font-size);
 
       &::before {
         color: var(--accent-color);
@@ -1324,19 +1363,26 @@ video {
   background-color: black;
 }
 
-.location-date-display {
+.location-display {
   display: flex;
   flex-direction: column;
-  align-items: center;
-
-  .v-chip {
-    width: fit-content;
-  }
+  align-items: left;
 }
 
-#location-chip {
+#location-button {
   pointer-events: auto;
   height: fit-content;
-  text-align: center;
+  text-align: left;
+  padding-inline: 1rem;
+}
+
+#body-logos {
+  position: absolute;
+  right: 0.5em;
+  bottom: 0.1em;
+
+  img {
+    height: 36px;
+  }
 }
 </style>
