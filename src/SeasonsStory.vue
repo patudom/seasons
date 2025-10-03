@@ -382,7 +382,7 @@ import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textFor
 
 import { useTimezone } from "./timezones";
 import { horizontalToEquatorial } from "./utils";
-import { makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
+import { resetAltAzGridText, makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
 import { formatInTimeZone } from "date-fns-tz";
@@ -762,6 +762,8 @@ const ready = computed(() => layersLoaded.value && positionSet.value);
 /* `isLoading` is a bit redundant here, but it could potentially have independent logic */
 const isLoading = computed(() => !ready.value);
 
+const inNorthernHemisphere = computed(() => selectedLocation.value.latitudeDeg > 0);
+
 /* Properties related to device/screen characteristics */
 const smallSize = computed(() => smAndDown.value);
 // const mobile = computed(() => smallSize.value && touchscreen);
@@ -918,6 +920,9 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
     goToEvent(event);
   }
 });
+
+watch(inNorthernHemisphere, (_inNorth: boolean) => resetAltAzGridText());
+
 </script>
 
 <style lang="less">
