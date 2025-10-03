@@ -716,6 +716,7 @@ onMounted(() => {
 
     // Adding Alt-Az grid here
     store.applySetting(["showAltAzGrid", true]);
+    store.applySetting(["showAltAzGridText", true]);
     store.applySetting(["altAzGridColor", Color.fromArgb(255, 255, 255, 255)]);
     store.applySetting(["localHorizonMode", true]);
 
