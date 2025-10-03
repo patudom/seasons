@@ -452,13 +452,13 @@ const sliderMax = 500;
 const sliderRange = sliderMax - sliderMin;
 const sliderValue = computed({
   get() {
-    const fraction = (selectedTime.value - startTime.value) / (endTime.value - startTime.value);
+    const fraction = (currentTime.value.getTime() - startTime.value) / (endTime.value - startTime.value);
     return sliderMin + fraction * sliderRange;
   },
   set(value: number) {
     const fraction = (value - sliderMin) / sliderRange;
     const time = fraction * (endTime.value - startTime.value) + startTime.value;
-    selectedTime.value = time;
+    store.setTime(new Date(time));
   }
 });
 
@@ -587,7 +587,7 @@ function goToEvent(event: EventOfInterest) {
 
   store.setTime(new Date(time));
   const timeStart = start.getTime();
-  selectedTime.value = timeStart;
+  store.setTime(new Date(timeStart));
   startTime.value = timeStart; // - timeStart % (24 * 60 * 60 * 1000) - selectedTimezoneOffset.value; // round down to the start of the day
 
   endTime.value = end.getTime();
@@ -690,25 +690,25 @@ function resetData() {
 }
 
 const selectedTime = ref(Date.now());
-setInterval(() => {
-  if (playing.value) {
-    selectedTime.value = currentTime.value.getTime();
-  }
-}, 50);
+// setInterval(() => {
+//   if (playing.value) {
+//     selectedTime.value = currentTime.value.getTime();
+//   }
+// }, 40);
 
 const { selectedTimezone, selectedTimezoneOffset } = useTimezone(selectedLocation);
   
 const { getTimeforSunAlt, getSunPositionAtTime } = useSun({
   store,
   location: selectedLocation,
-  selectedTime,
+  selectedTime: currentTime,
   selectedTimezoneOffset,
   zoomLevel: 360,
 });
 
 const selectedLocaledTimeDateString = computed(() => {
   const formatString = "h:mm aa (zzz)";
-  return formatInTimeZone(selectedTime.value, selectedTimezone.value, formatString);
+  return formatInTimeZone(currentTime.value, selectedTimezone.value, formatString);
 });
 
 // import { getTimezoneOffset } from "date-fns-tz";
@@ -908,8 +908,7 @@ watch(selectedLocation, (location: LocationDeg, oldLocation: LocationDeg) => {
   WWTControl.singleton.renderOneFrame();
 });
 
-watch(selectedTime, (time: number) => {
-  store.setTime(new Date(time)); 
+watch(currentTime, (_time: Date) => {
   resetView(store.zoomDeg);
 });
 
