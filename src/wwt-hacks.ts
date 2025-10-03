@@ -41,7 +41,7 @@ export function resetAltAzGridText() {
 
 export function makeAltAzGridText() {
   if (Grids._altAzTextBatch == null) {
-    const glyphHeight = 70;
+    const glyphHeight = 130;  
     Grids._altAzTextBatch = new Text3dBatch(glyphHeight);
     const sign = SpaceTimeController.get_location().get_lat() < 0 ? -1 : 1;
     const alt = 0.03 * sign;
