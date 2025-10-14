@@ -99,5 +99,5 @@ jobs:
         if: ${{ steps.draft.outputs.value }} == 'true'
         with:
           branch: gh-pages
-          folder: dist
+          folder: deployment
           ssh-key: ${{ secrets.DEPLOY_KEY }}
