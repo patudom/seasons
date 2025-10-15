@@ -23,7 +23,7 @@
           tabindex="0"
           />
         <div id="splash-screen-text">
-          <p>FORK Test The Sun's Seasonal Journey</p>
+          <p>The Sun's Seasonal Journey</p>
         </div>
       </div>
 
