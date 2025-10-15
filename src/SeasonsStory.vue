@@ -37,25 +37,49 @@
     <div id="top-content">
       <div id="left-buttons">
         <div class="location-display">
+          <div
+            id="location-title"
+            class="event-title"
+          >
+
+            <button 
+              @click="showLocationSelector = !showLocationSelector"
+              class="icon-location-button"
+            >
+              <font-awesome-layers>
+                <font-awesome-icon
+                  icon="location-dot"
+                  color="black"
+                />
+                <font-awesome-icon
+                  icon="location-dot"
+                  :color="accentColor"
+                  transform="shrink-3"
+                />
+              </font-awesome-layers>
+            </button>
+
+            <!-- <icon-button
+              v-model="showLocationSelector"
+              fa-icon="location-dot"
+              fa-size="sm"
+              :color="accentColor"
+              tooltip-text="Select Location"
+              tooltip-location="start"
+            ></icon-button> -->
+            <h4>View from</h4>
+          </div>
           <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
           <button
             id="location-button"
             class="event-button selected"
             @click="showLocationSelector = true"
           > 
-          <h4 class="mb-1">View from:</h4>
           <div>{{ selectedLocationInfo.name }}</div>
           <div>Lat: {{ selectedLocationInfo.latitude }}</div>
           <div>Long: {{ selectedLocationInfo.longitude }}</div>
           </button>
         </div>
-        <icon-button
-          v-model="showLocationSelector"
-          fa-icon="location-dot"
-          :color="accentColor"
-          tooltip-text="Select Location"
-          tooltip-location="start"
-        ></icon-button>
         <v-dialog
           v-model="showLocationSelector"
           max-width="fit-content"
@@ -105,11 +129,9 @@
           :color="accentColor"
           :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
           tooltip-location="start"
+          fa-size="sm"
         >
         </icon-button>
-      </div>
-      <div id="center-buttons">
-
       </div>
       <div id="right-buttons">
         <div
@@ -117,17 +139,19 @@
         >
           <h4>Displayed Date</h4>
         </div>
-        <button
-          :class="[event === selectedEvent ? 'selected' : '']"
-          v-for="([event, value], index) in sortedDatesOfInterest"
-          v-ripple
-          class="event-button"
-          :key="index"
-          @click="selectedEvent = event;"
-        >
-          <div>{{ dayString(value.date) }}</div>
-          <div>{{ eventName(event) }}</div>
-        </button>
+        <div class="date-buttons">
+          <button
+            :class="[event === selectedEvent ? 'selected' : '']"
+            v-for="([event, value], index) in sortedDatesOfInterest"
+            v-ripple
+            class="event-button"
+            :key="index"
+            @click="selectedEvent = event;"
+          >
+            <div>{{ dayString(value.date) }}</div>
+            <div>{{ eventName(event) }}</div>
+          </button>
+        </div>
       </div>
     </div>
     
@@ -538,7 +562,7 @@ const accentColor = computed(() => {
 function dayString(date: Date) {
   return date.toLocaleString("en-US", {
     year: "numeric",
-    month: "long",
+    month: smallSize.value ? "short" : "long",
     day: "numeric",
   });
 }
@@ -1068,9 +1092,14 @@ body {
 #right-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   align-items: flex-end;
   height: auto;
+
+  .date-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;    
+  }
 }
 
 #bottom-content {
@@ -1083,6 +1112,10 @@ body {
   pointer-events: none;
   align-items: center;
   gap: 5px;
+
+  @media (max-width: 699px) {
+    flex-direction: row;
+  }
 }
 
 #splash-overlay {
@@ -1274,11 +1307,24 @@ video {
   pointer-events: auto;
 }
 
+#location-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-location-button {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .event-button {
+  font-size: var(--default-font-size);
   background: black;
   border: 1px solid white;
   border-radius: 5px;
-  padding: 10px;
+  padding: 0.5rem;
   width: 100%;
   pointer-events: auto;
 
@@ -1289,10 +1335,16 @@ video {
 }
 
 .event-title {
+  font-size: var(--default-font-size);
+  padding-bottom: 5px;
   display: flex;
   align-content: center;
   color: var(--accent-color);
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+.icon-outline {
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;  
 }
 
 .map-container {
@@ -1310,6 +1362,12 @@ video {
 .v-slider {
   width: 80%;
   pointer-events: auto;
+
+  @media (max-width: 699px) {
+    padding-left: 2rem;
+    padding-right: 1rem;
+    min-width: 50%;
+  }
 }
 
 .time-slider {
@@ -1329,6 +1387,12 @@ video {
         color: var(--accent-color);
       }
     }
+  }
+}
+
+#bottom-content #speed-buttons {
+  @media (max-width: 699px) {
+    gap: 6px;
   }
 }
 
@@ -1378,7 +1442,7 @@ video {
   pointer-events: auto;
   height: fit-content;
   text-align: left;
-  padding-inline: 1rem;
+  padding-inline: 0.5rem;
 }
 
 #body-logos {
