@@ -129,11 +129,9 @@
           :color="accentColor"
           :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
           tooltip-location="start"
+          fa-size="sm"
         >
         </icon-button>
-      </div>
-      <div id="center-buttons">
-
       </div>
       <div id="right-buttons">
         <div
@@ -1114,6 +1112,10 @@ body {
   pointer-events: none;
   align-items: center;
   gap: 5px;
+
+  @media (max-width: 699px) {
+    flex-direction: row;
+  }
 }
 
 #splash-overlay {
@@ -1360,6 +1362,12 @@ video {
 .v-slider {
   width: 80%;
   pointer-events: auto;
+
+  @media (max-width: 699px) {
+    padding-left: 2rem;
+    padding-right: 1rem;
+    min-width: 50%;
+  }
 }
 
 .time-slider {
@@ -1379,6 +1387,12 @@ video {
         color: var(--accent-color);
       }
     }
+  }
+}
+
+#bottom-content #speed-buttons {
+  @media (max-width: 699px) {
+    gap: 6px;
   }
 }
 
