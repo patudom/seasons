@@ -159,20 +159,52 @@
 
     <div id="bottom-content">
 
-      <v-slider
-        v-model="sliderValue"
-        :color="accentColor"
-        :min="sliderMin"
-        :max="sliderMax"
-        thumb-label="always"
-        class="time-slider"
-      >
-        <template v-slot:thumb-label>
-          <div class="thumb-label">
-            {{ selectedLocaledTimeDateString }}
-          </div>
-        </template>
-      </v-slider>
+      <div id="time-slider-chips">
+        <v-slider
+          v-model="sliderValue"
+          :color="accentColor"
+          :min="sliderMin"
+          :max="sliderMax"
+          thumb-label="always"
+          class="time-slider"
+        >
+          <template v-slot:thumb-label>
+            <div class="thumb-label">
+              {{ selectedLocaledTimeDateString }}
+            </div>
+          </template>
+        </v-slider>
+
+        <div class="time-chips">
+          <v-chip
+            @click="sliderValue = sliderMin"
+            :color="accentColor"
+            variant="elevated"
+            size="x-small"
+            class="time-chip"
+          >
+            Sunrise
+          </v-chip>
+          <v-chip
+            @click="sliderValue = (sliderMin + sliderMax) / 2"
+            :color="accentColor"
+            variant="elevated"
+            size="x-small"
+            class="time-chip"
+          >
+            Midday
+          </v-chip>
+          <v-chip
+            @click="sliderValue = sliderMax"
+            :color="accentColor"
+            variant="elevated"
+            size="x-small"
+            class="time-chip"
+          >
+            Sunset
+          </v-chip>
+        </div>
+      </div>
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
       <speed-control
@@ -1105,32 +1137,6 @@ body {
   }
 }
 
-#bottom-content {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  width: calc(100% - 2rem);
-  pointer-events: none;
-  align-items: center;
-  gap: 5px;
-
-  @media (max-width: 699px) {
-    flex-direction: row;
-  }
-
-  .v-input__details {
-    min-height: 0;
-    padding-top: 0;
-  }
-
-  #speed-control-icon-button {
-    display: none;
-  }
-
-}
-
 #splash-overlay {
   position: fixed;
   display: flex;
@@ -1333,7 +1339,7 @@ video {
 }
 
 .event-button {
-  font-size: var(--default-font-size);
+  font-size: calc(0.9 * var(--default-font-size));
   background: black;
   border: 1px solid white;
   border-radius: 5px;
@@ -1356,10 +1362,6 @@ video {
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
-.icon-outline {
-  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;  
-}
-
 .map-container {
   @media (max-width: 600px) {
     width: 90vw;
@@ -1372,15 +1374,53 @@ video {
   }
 }
 
-.v-slider {
+#bottom-content {
   width: 80%;
-  pointer-events: auto;
+  display: flex;
+  flex-direction: row;
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  // width: calc(100% - 2rem);
+  pointer-events: none;
+  align-items: center;
+  gap: 30px;
 
+  @media (max-width: 959px) {
+    width: 95%;
+    gap: 5px;
+    bottom: 1rem;
+  }
+
+  #speed-control-icon-button {
+    display: none;
+  }
+
+}
+
+#time-slider-chips {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  padding-left: 3rem;
+  padding-right: 2rem;
+
+  .v-input__details {
+    height: 0;
+    min-height: 0;
+    padding-top: 0;
+  }
+  
   @media (max-width: 699px) {
-    padding-left: 2rem;
+    padding-left: 1.5rem;
     padding-right: 1rem;
     min-width: 50%;
   }
+}
+
+.v-slider {
+  pointer-events: auto;
 }
 
 .time-slider {
@@ -1393,12 +1433,31 @@ video {
       border: 2px solid var(--accent-color);
       border-radius: 5px;
       width: max-content;
-      height: calc(2.5 * var(--default-font-size));
-      font-size: var(--default-font-size);
+      padding: 10px;
+      font-size: calc(0.8 * var(--default-font-size));
 
       &::before {
         color: var(--accent-color);
       }
+
+      @media (max-width: 699px) {
+        font-size: calc(0.9 * var(--default-font-size));
+      }
+    }
+  }
+}
+
+.time-chips {
+  display: flex;
+  justify-content: space-between;
+  pointer-events: auto;
+
+  .time-chip {
+    cursor: pointer;
+    font-size: calc(0.8 * var(--default-font-size));
+
+    &:hover {
+      opacity: 0.8;
     }
   }
 }
