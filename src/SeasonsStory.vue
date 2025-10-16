@@ -1116,6 +1116,16 @@ body {
   @media (max-width: 699px) {
     flex-direction: row;
   }
+
+  .v-input__details {
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  #speed-control-icon-button {
+    display: none;
+  }
+
 }
 
 #splash-overlay {
