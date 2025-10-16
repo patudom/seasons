@@ -1404,7 +1404,7 @@ video {
   .v-overlay__content {
     align-self: flex-end;
     padding: 0;
-    margin: 0;
+    margin: 0 !important;
     max-width: 100%;
     height: 34%;
   }
