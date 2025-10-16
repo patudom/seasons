@@ -1405,7 +1405,7 @@ video {
     align-self: flex-end;
     padding: 0;
     margin: 0 !important;
-    max-width: 100%;
+    max-width: 100% !important;
     height: 34%;
   }
 
