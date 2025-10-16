@@ -598,9 +598,12 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   const oldOffset = getTimezoneOffset(tzlookup(oldLocation.latitudeDeg, oldLocation.longitudeDeg));
 
   const diff = oldOffset - selectedTimezoneOffset.value;
-  let newSelectedTime = selectedTime.value + diff;
+  let newSelectedTime = currentTime.value.getTime() + diff;
   newSelectedTime = Math.min(Math.max(startTime.value, newSelectedTime), endTime.value);
   selectedTime.value = newSelectedTime;
+  
+  // Update time in WWT to reflect the new location's timing
+  store.setTime(new Date(newSelectedTime));
 }
 
 function goToEvent(event: EventOfInterest) {
