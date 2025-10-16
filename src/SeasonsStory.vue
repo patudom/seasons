@@ -1403,9 +1403,9 @@ video {
 .bottom-sheet {
   .v-overlay__content {
     align-self: flex-end;
-    padding: 0;
+    padding: 0 !important;
     margin: 0;
-    max-width: 100%;
+    max-width: 100% !important;
     height: 34%;
   }
 
