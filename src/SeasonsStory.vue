@@ -1661,7 +1661,7 @@ video {
 
 #bottom-content #speed-buttons {
   @media (max-width: 699px) {
-    gap: 6px;
+    gap: 6px !important;
   }
 }
 
