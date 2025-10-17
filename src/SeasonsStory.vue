@@ -1403,7 +1403,7 @@ video {
 .bottom-sheet {
   .v-overlay__content {
     align-self: flex-end;
-    padding: 0;
+    padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
     height: 34%;
@@ -1579,6 +1579,12 @@ video {
     display: none;
   }
 
+  @media (max-width: 699px) {
+    #reset-button {
+      display: none;
+    }
+  }  
+
 }
 
 #time-slider-chips {
@@ -1623,10 +1629,14 @@ video {
       }
 
       @media (max-width: 699px) {
-        font-size: calc(0.9 * var(--default-font-size));
+        padding-inline: 5px;
       }
     }
   }
+  @media (max-width: 699px) {
+    padding-left: 5px;
+  }
+
 }
 
 .time-chips {
@@ -1641,6 +1651,11 @@ video {
     &:hover {
       opacity: 0.8;
     }
+  }
+
+  @media (max-width: 699px) {
+    font-size: calc(0.7 * var(--default-font-size));
+    padding-inline: 1px;
   }
 }
 
