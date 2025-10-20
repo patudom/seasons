@@ -1181,8 +1181,8 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
-  overflow: hidden;
   font-size: 11pt;
+  overflow: auto !important;
 
   .wwtelescope-component {
     position: absolute;
@@ -1195,7 +1195,6 @@ body {
     padding: 0;
   }
 }
-
 
 .fade-enter-active,
 .fade-leave-active {
@@ -1303,6 +1302,9 @@ body {
   flex-wrap: wrap;
   align-content: center;
   justify-content: space-around;
+  height: fit-content;
+
+  backdrop-filter: blur(5px);
 
   font-family: 'Highway Gothic Narrow', 'Roboto', sans-serif;
   font-size: min(8vw, 7vh);
