@@ -12,19 +12,18 @@
       v-click-outside="closeSplashScreen"
       :style="cssVars"
     >
-      <div
-        id="first-splash-row"
-      >
-        <font-awesome-icon
-          id="close-splash-button"
-          @click="closeSplashScreen"
-          @keyup.enter="closeSplashScreen"
-          icon="xmark"
-          tabindex="0"
-          />
-        <div id="splash-screen-text">
-          <p>The Sun's Seasonal Journey</p>
-        </div>
+      <font-awesome-icon
+        id="close-splash-button"
+        @click="closeSplashScreen"
+        @keyup.enter="closeSplashScreen"
+        icon="xmark"
+        tabindex="0"
+      />
+      <div id="splash-title">
+        <p>The Sun's Seasonal Journey</p>
+      </div>
+      <div id="invitation">
+        See how the Sun's path changes on the solstices and equinoxes from any location on Earth!
       </div>
 
       <div id="location-input-section">
@@ -44,8 +43,8 @@
           {{ searchErrorMessage }}
         </div>
       </div>
-      <div>
-        <p class="medium">or</p>
+      <div class="medium">
+        or
       </div>
       <div>
         <v-btn
@@ -54,7 +53,7 @@
           @keyup.enter="closeSplashScreen"
           :color="cssVars['--accent-color']"
           :density="$vuetify.display.xs ? 'compact' : 'default'"
-          :size="$vuetify.display.width < 250 ? 'large' : 'x-large'"
+          :size="$vuetify.display.width < 500 || $vuetify.display.height < 550 ? 'medium' : 'x-large'"
           variant="elevated"
           rounded="lg"
         >
@@ -132,116 +131,105 @@ function closeSplashScreen() {
 <style lang="less">
 
 #splash-overlay {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: min(8vw, 7vh);
   transition: width 0.5s, height 0.5s;
 }
 
 #splash-screen {
   color: #E0E0E0;
-
-  height: fit-content;
+  background-color: #000000;
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: space-around;
+  height: fit-content;
+  max-height: 85vh;
+
+  backdrop-filter: blur(5px);
+
+  border-radius: 5%;
+  border: min(1.2vw, 0.9vh) solid var(--accent-color);
+  overflow: auto;
+  padding-block: 2rem;
 
   @media (max-width: 699px) {
-    max-height: 85vh;
     max-width: 90vw;
   }
 
-  @media (min-width: 700px) {
-    max-height: 85vh;
-    max-width: min(70vw, 800px);
+  @media (max-height: 600px) {
+    max-width: 95vw;
   }
-
-
-  background-color: black;
-  backdrop-filter: blur(5px);
-  justify-content: space-around;
-  align-content: center;
-  padding-block: 1.5rem;
-
-  border-radius: 30px;
-  border: min(1.2vw, 0.9vh) solid var(--accent-color);
-  overflow: auto;
-  font-family: 'Highway Gothic Narrow', 'Roboto', sans-serif;
 
   div {
     margin-inline: auto;
     text-align: center;
   }
-  
-  // Make the div containing the Get Started button only as tall as the button
-  div:has(.splash-get-started) {
-    height: fit-content;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 1rem;
-  }
+
   // make a paragraph inside the div centered horizontally and vertically
   p {
     font-family: 'Highway Gothic Narrow', 'Roboto', sans-serif;
     font-weight: bold;
     vertical-align: middle;
   }
-    
-  p.highlight {
-    color: var(--accent-color2);
-    text-transform: uppercase;
-    font-weight: bolder;
-  }
-  
-  p.small {
+
+  .small {
     font-size: var(--default-font-size);
     font-weight: bold;
   }
 
-  p.medium {
-    font-size: 20px;
-  }
-
-  #first-splash-row {
-    width: 100%;
-  }
-
   #close-splash-button {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 1rem;
+    right: 1.75rem;
     text-align: end;
     color: var(--accent-color);
-    font-size: min(5vw, 4vh);
-    padding: 0.25rem;
-    margin: -0.25rem;
+    font-size: 2rem;
 
     &:hover {
       cursor: pointer;
     }
   }
 
-  #splash-screen-text {
-    // in the grid, the text is in the 2nd column
+  #splash-title {
     display: flex;
     flex-direction: column;
-    line-height: 130%;
+    font-family: 'Highway Gothic Narrow', 'Roboto', sans-serif;
+    font-size: 3.5rem;
+    line-height: 1.1;
+    width: 90%;
+    text-align: center;
+    padding-block: 1rem;
+    margin: auto;
 
-    p {
-      width: 80%;
-      text-align: center;
-      margin: auto;
+    @media (max-width: 699px) {
+      font-size: 2.5rem;
     }
-    
+
+    @media (max-height: 600px) {
+      font-size: 2.5rem;
+      padding-block: 0.25rem;
+    }
   }
 
-  .splash-get-started {
-    border: 2px solid white;
-    font-size: calc(1.5 * var(--default-font-size));
-    // margin-top: 5%;
-    // margin-bottom: 2%;
-    font-weight: bold !important;
-    text-transform: none !important;
+  #invitation {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    width: 80%;
+    padding-block: 0.5rem;
+
+    @media (max-width: 699px) {
+      display: none;
+    }
+
+    @media (max-height: 600px) {
+      display: none;
+    }
   }
 
   #location-input-section {
@@ -249,9 +237,8 @@ function closeSplashScreen() {
     width: 100%;
     
     .location-prompt {
-      font-size: calc(1.2 * var(--default-font-size));
+      font-size: 1.2rem;
       margin-bottom: 1rem;
-      color: #E0E0E0;
     }
     
     .splash-location-search {
@@ -287,47 +274,70 @@ function closeSplashScreen() {
         cursor: text !important;
         padding: 0;
       }
-      
     }
     
     .error-message {
       color: #ff6b6b;
-      font-size: calc(0.9 * var(--default-font-size));
-      margin-top: 0.5rem;
+      font-size: 1rem;
+      margin-top: 1rem;
     }
   }
 
-  #splash-screen-guide {
-    margin-block: 1.5em;
-    font-size: min(5vw, 4vh);
-    line-height: 140%;
-    width: 75%;
+  .medium {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  
+  // Make the div containing the Get Started button only as tall as the button
+  div:has(.splash-get-started) {
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+  }
 
-    .v-col{
-      padding: 0;
+  .splash-get-started {
+    border: 2px solid white;
+    font-size: 1.1rem;
+    font-weight: bold !important;
+    text-transform: none !important;
+
+    @media (max-width: 500px) {
+      font-size: 1rem;
+      padding: 0.5rem;
     }
-    
-    .svg-inline--fa {
-      color:var(--accent-color);
-      margin: 0 10px;
+
+    @media (max-height: 550px) {
+      font-size: 1rem;
+      padding: 0.5rem;
     }
   }
 
   #splash-screen-acknowledgements {
     // margin-top: 3rem;
     margin-top: clamp(0.5rem, 3vh, 3rem);
-    font-size: calc(1.7 * var(--default-font-size));
-    line-height: calc(1.5 * var(--default-line-height));
+    font-size: 1rem;
     width: 60%; 
+    margin-bottom: 1rem;
+
+    // @media (max-width: 600px) {
+    //   display: none;
+    // }
+
+    @media (max-height: 500px) {
+      display: none;
+    }
   }
 
   #splash-screen-logos {
-    margin-top: 0.75em;
+    margin-top: 1.5em;
 
     img {
-    height: 5vmin;
-    vertical-align: middle;
-    margin: 2px;
+      height: 5vmin;
+      vertical-align: middle;
+      margin: 2px;
     }
 
     @media only screen and (max-width: 600px) {
@@ -340,50 +350,9 @@ function closeSplashScreen() {
       vertical-align: middle;
       height: 24px;
     }
-  }
-}
-
-@media (max-height: 600px) {
-  #splash-screen p.medium {
-    font-size: 14px;
-  }
-  #splash-screen-text p {
-    font-size: 20pt;
-  }
-}
-
-@media (max-height: 500px) {
-  #splash-screen {
-    // display: flex;
-    // flex-direction: column;
-    // max-width: 200vh;
-    // justify-content: center;
-    // align-items: center;
-    // gap: calc(0.5 * var(--default-line-height));
-    overflow: hidden;
-  
-    #splash-screen-text {
-      line-height: 75%;
+    @media (max-height: 600px) {
+      display: none;
     }
-    
-    .splash-get-started {
-      margin-top: 0;
-      margin-bottom: 0;
-    }
-    
-    #splash-screen-acknowledgements {
-      font-size: calc(1.5 * var(--default-font-size));
-    }
-  }
-}
-
-@media (max-height: 310px) {
-  #splash-screen {
-    width: 50vw;
-    padding-block: 10px;
-  }
-  #splash-screen-acknowledgements  {
-    display: none;
   }
 }
 
