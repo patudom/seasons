@@ -1142,8 +1142,7 @@ watch(inNorthernHemisphere, (_inNorth: boolean) => resetAltAzGridText());
 }
 
 :root {
-  --default-font-size: clamp(0.7rem, min(1.7vh, 1.7vw), 1.1rem);
-  --default-line-height: clamp(1rem, min(2.2vh, 2.2vw), 1.6rem);
+  font-size: clamp(0.8rem, min(1.7vh, 1.7vw), 1.1rem);
 }
 
 html {
@@ -1151,9 +1150,8 @@ html {
   margin: 0;
   padding: 0;
   background-color: #000;
-  overflow: hidden;
+  overflow: auto !important;
 
-  
   -ms-overflow-style: none;
   // scrollbar-width: none;
 }
@@ -1164,7 +1162,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: auto !important;
 
   font-family: Verdana, Arial, Helvetica, sans-serif;
 }
@@ -1182,8 +1180,8 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
-  overflow: hidden;
   font-size: 11pt;
+  overflow: auto !important;
 
   .wwtelescope-component {
     position: absolute;
@@ -1196,7 +1194,6 @@ body {
     padding: 0;
   }
 }
-
 
 .fade-enter-active,
 .fade-leave-active {
@@ -1285,66 +1282,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;    
-  }
-}
-
-#splash-overlay {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-#splash-screen {
-  color: #FFFFFF;
-  background-color: #000000;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: space-around;
-
-  font-family: 'Highway Gothic Narrow', 'Roboto', sans-serif;
-  font-size: min(8vw, 7vh);
-
-  border-radius: 10%;
-  border: min(1.2vw, 0.9vh) solid var(--accent-color);
-  overflow: auto;
-  padding-top: 4rem;
-  padding-bottom: 1rem;
-
-  @media (max-width: 699px) {
-    max-height: 80vh;
-    max-width: 90vw;
-  }
-
-  @media (min-width: 700px) {
-    max-height: 85vh;
-    max-width: min(70vw, 800px);
-  }
-
-  div {
-    margin-inline: auto;
-    text-align: center;
-  }
-
-  .small {
-    font-size: var(--default-font-size);
-    font-weight: bold;
-  }
-
-  #close-splash-button {
-    position: absolute;
-    top: 0.5rem;
-    right: 1.75rem;
-    text-align: end;
-    color: var(--accent-color);
-    font-size: min(8vw, 5vh);
-
-    &:hover {
-      cursor: pointer;
-    }
   }
 }
 
@@ -1468,11 +1405,11 @@ video {
 
       @media (max-width: 699px) {
         h3 {
-          font-size: calc(1.3 * var(--default-font-size));
+          font-size: 1.3rem;
         }
 
         h4 {
-          font-size: calc(1.1 * var(--default-font-size));
+          font-size: 1.1rem;
         }
       }
 
@@ -1521,7 +1458,7 @@ video {
 }
 
 .event-button {
-  font-size: calc(0.9 * var(--default-font-size));
+  font-size: 0.9rem;
   background: black;
   border: 1px solid white;
   border-radius: 5px;
@@ -1536,7 +1473,7 @@ video {
 }
 
 .event-title {
-  font-size: var(--default-font-size);
+  font-size: 1rem;
   padding-bottom: 5px;
   display: flex;
   align-content: center;
@@ -1622,7 +1559,7 @@ video {
       border-radius: 5px;
       width: max-content;
       padding: 10px;
-      font-size: calc(0.8 * var(--default-font-size));
+      font-size: 0.8rem;
 
       &::before {
         color: var(--accent-color);
@@ -1646,7 +1583,7 @@ video {
 
   .time-chip {
     cursor: pointer;
-    font-size: calc(0.8 * var(--default-font-size));
+    font-size: 0.8rem;
 
     &:hover {
       opacity: 0.8;
@@ -1654,7 +1591,7 @@ video {
   }
 
   @media (max-width: 699px) {
-    font-size: calc(0.7 * var(--default-font-size));
+    font-size: 0.7rem;
     padding-inline: 1px;
   }
 }
@@ -1731,7 +1668,7 @@ video {
     }
 
     h3 {
-      font-size: var(--default-font-size);
+      font-size: 1rem;
     }
   }  
 }
