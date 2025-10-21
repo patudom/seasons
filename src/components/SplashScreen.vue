@@ -152,7 +152,7 @@ function closeSplashScreen() {
 
   backdrop-filter: blur(5px);
 
-  border-radius: 5%;
+  border-radius: 30px;
   border: min(1.2vw, 0.9vh) solid var(--accent-color);
   overflow: auto;
   padding-block: 2rem;
