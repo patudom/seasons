@@ -631,6 +631,10 @@ const showLocationSelector = ref(false);
 
 const showHorizon = ref(true);
 
+const startAzOffset = 40 * D2R;
+const endAzOffset = -startAzOffset;
+let azOffsetSlope = 0;
+
 // Get the next 4 "dates of interest"
 // i.e. equinoxes and solstices
 const currentDate = new Date();
@@ -767,6 +771,7 @@ function getStartAndEndTimes(event: EventOfInterest): [Date, Date] {
     end = new Date(dayEnd);
   }
 
+
   return [start, end];
 }
 
@@ -779,6 +784,7 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   endTime.value = end.getTime();
 
   const oldOffset = getTimezoneOffset(tzlookup(oldLocation.latitudeDeg, oldLocation.longitudeDeg));
+  azOffsetSlope = (endAzOffset - startAzOffset) / (endTime.value - startTime.value);
 
   const diff = oldOffset - selectedTimezoneOffset.value;
   let newSelectedTime = currentTime.value.getTime() + diff;
@@ -794,6 +800,7 @@ function goToEvent(event: EventOfInterest) {
   const time = day.getTime();
 
   const [start, end] = getStartAndEndTimes(event);
+  azOffsetSlope = (endAzOffset - startAzOffset) / (end.getTime() - start.getTime());
 
   store.setTime(new Date(time));
   const timeStart = start.getTime();
@@ -1034,26 +1041,31 @@ function selectSheet(sheetType: SheetType | null) {
   }
 }
 
-function resetView(zoomDeg?: number) {
+function resetView(zoomDeg?: number, withAzOffset=true) {
   const time = store.currentTime;
 
   const latRad = selectedLocation.value.latitudeDeg * D2R;
   const lonRad = selectedLocation.value.longitudeDeg * D2R;
 
   const sunAltAz = getSunPositionAtTime(time);
-  const sunAz = sunAltAz.azRad;
-  const startAlt = (smallSize.value ? 33 : 33) * D2R;
-  const startRADec = horizontalToEquatorial(
-    startAlt,
-    sunAz,
+  let az = sunAltAz.azRad;
+  const alt = 33 * D2R;
+  if (time.getTime() > 0 && withAzOffset) {
+    const offset = (azOffsetSlope * (time.getTime() - startTime.value) + startAzOffset);
+    const sgn = selectedLocation.value.latitudeDeg >= 0 ? 1 : -1;
+    az += (offset * sgn);
+  }
+  const raDec = horizontalToEquatorial(
+    alt,
+    az,
     latRad,
     lonRad,
     time,
   );
 
   return store.gotoRADecZoom({
-    raRad: startRADec.raRad,
-    decRad: startRADec.decRad,
+    raRad: raDec.raRad,
+    decRad: raDec.decRad,
     zoomDeg: zoomDeg ?? MAX_ZOOM,
     instant: true,
   });
@@ -1118,6 +1130,7 @@ watch(selectedLocation, (location: LocationDeg, oldLocation: LocationDeg) => {
   updateSelectedLocationInfo();
   updateWWTLocation(location);
   updateSliderBounds(location, oldLocation);
+  resetView();
   WWTControl.singleton.renderOneFrame();
 });
 
