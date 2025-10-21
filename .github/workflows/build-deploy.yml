@@ -3,11 +3,12 @@ name: Build and Deploy
 on:
   push:
     branches:
-      deploy
+      - main
+      - infiniscope
 
 jobs:
   build:
-    if: ${{ github.repository_owner == 'patudom' }}
+    if: ${{ github.repository_owner == 'cosmicds' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
