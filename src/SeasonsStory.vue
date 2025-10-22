@@ -1133,6 +1133,13 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
 
 watch(inNorthernHemisphere, (_inNorth: boolean) => resetAltAzGridText());
 
+// Auto-pause when time exceeds sunset
+watch(currentTime, (newTime: Date) => {
+  if (playing.value && newTime.getTime() >= endTime.value) {
+    playing.value = false;
+  }
+});
+
 </script>
 
 <style lang="less">
