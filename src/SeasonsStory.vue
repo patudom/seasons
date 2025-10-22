@@ -213,7 +213,7 @@
         :color="accentColor" 
         :defaultRate="1000"
         :maxSpeed="10000"
-        show-text
+        show-status
         hideMoreControls="true"
         @reset="() => {
           selectedEvent && goToEvent(selectedEvent);
@@ -1521,6 +1521,13 @@ video {
       display: none;
     }
   }  
+
+  #speed-text {
+    font-size: 1rem;
+    background-color: transparent !important;
+    color: var(--accent-color);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
 
 }
 
