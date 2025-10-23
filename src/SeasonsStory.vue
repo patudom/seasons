@@ -589,7 +589,7 @@ import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textFor
 
 import { useTimezone } from "./timezones";
 import { horizontalToEquatorial } from "./utils";
-import { resetAltAzGridText, makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
+import { resetNSEWText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
 import { formatInTimeZone } from "date-fns-tz";
@@ -1065,7 +1065,6 @@ function updateWWTLocation(location: LocationDeg) {
 }
 
 function doWWTModifications() {
-  Grids._makeAltAzGridText = makeAltAzGridText;
   Grids.drawEcliptic = drawEcliptic;
 
   // We need to render one frame ahead of time
@@ -1131,7 +1130,7 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
   }
 });
 
-watch(inNorthernHemisphere, (_inNorth: boolean) => resetAltAzGridText());
+watch(inNorthernHemisphere, (_inNorth: boolean) => resetNSEWText());
 
 </script>
 
