@@ -584,6 +584,7 @@ import {
   blurActiveElement,
   useWWTKeyboardControls,
   D2R,
+  R2D,
 } from "@cosmicds/vue-toolkit";
 import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textForLocation } from "@cosmicds/vue-toolkit/src/mapbox";
 
@@ -822,9 +823,13 @@ const wwtStats = markRaw({
   startTime: Date.now(),
 });
 
+// const selectedLocation = ref<LocationDeg>({
+//   longitudeDeg: -71.1056,
+//   latitudeDeg: 42.3581,
+// });
 const selectedLocation = ref<LocationDeg>({
-  longitudeDeg: -71.1056,
-  latitudeDeg: 42.3581,
+  latitudeDeg: 1 + 29 / 60,
+  longitudeDeg: 65 + 8 / 60,
 });
 const selectedLocationInfo = ref<LocationInfo>({ name: "", latitude: "", longitude: "" });
 const searchErrorMessage = ref<string | null>(null);
@@ -1049,12 +1054,30 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
 
   const sunAltAz = getSunPositionAtTime(time);
   let az = sunAltAz.azRad;
-  const alt = 33 * D2R;
+  let altDeg = 33;
+
+  const tMidday = 0.5 * (startTime.value + endTime.value);
+  const middayAltAz = getSunPositionAtTime(new Date(tMidday));
+  const middayAltDeg = middayAltAz.altRad * R2D;
+  console.log(`Midday altDeg: ${middayAltDeg}`);
+  
+  if (middayAltDeg > 70) {
+    const t = (time.getTime() - startTime.value) / (endTime.value - startTime.value);
+    const f = -2 * Math.abs(0.5 - t) + 1;
+    console.log(`f: ${f}`);
+    altDeg = middayAltDeg * f;
+    console.log(`Altdeg raw: ${altDeg}`);
+    altDeg = Math.max(90 - Math.abs(altDeg - 90), 33);
+  }
+  const alt = altDeg * D2R;
+  console.log(`Alt Deg: ${altDeg}`);
+
   if (time.getTime() > 0 && withAzOffset) {
     const offset = (azOffsetSlope * (time.getTime() - startTime.value) + startAzOffset);
     const sgn = selectedLocation.value.latitudeDeg >= 0 ? 1 : -1;
     az += (offset * sgn);
   }
+  console.log(alt * R2D, az * R2D);
   const raDec = horizontalToEquatorial(
     alt,
     az,
@@ -1062,8 +1085,9 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
     lonRad,
     time,
   );
+  console.log(raDec);
 
-  return store.gotoRADecZoom({
+  store.gotoRADecZoom({
     raRad: raDec.raRad,
     decRad: raDec.decRad,
     zoomDeg: zoomDeg ?? MAX_ZOOM,
