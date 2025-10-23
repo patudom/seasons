@@ -35,14 +35,16 @@ import {
 import { drawHorizon, drawSky } from "./horizon_sky";
 import { makeTextOverlays } from "./text";
 
-export function resetAltAzGridText() {
-  Grids._altAzTextBatch = null;
+const nsewBatch = null;
+
+export function resetNSEWText() {
+  nsewBatch = null;
 }
 
-export function makeAltAzGridText() {
-  if (Grids._altAzTextBatch == null) {
+export function makeNSEWText() {
+  if (nsewBatch == null) {
     const glyphHeight = 130;  
-    Grids._altAzTextBatch = new Text3dBatch(glyphHeight);
+    nsewBatch = new Text3dBatch(glyphHeight);
     const sign = SpaceTimeController.get_location().get_lat() < 0 ? -1 : 1;
     const alt = 0.03 * sign;
     const up = Vector3d.create(0, sign, 0);
@@ -53,10 +55,33 @@ export function makeAltAzGridText() {
       [[sign, alt,  0], "W"],
     ]
     directions.forEach(([v, text]) => {
-      Grids._altAzTextBatch.add(new Text3d(Vector3d.create(...v), up, text, 75, 0.00018));
+      nsewBatch.add(new Text3d(Vector3d.create(...v), up, text, 75, 0.00018));
     });
-    useCustomGlyphs(Grids._altAzTextBatch);
+    useCustomGlyphs(nsewBatch);
   }
+}
+
+export function drawNSEWText(renderContext, opacity, drawColor) {
+  var zenithAltAz = new Coordinates(0, 0);
+  var zenith = Coordinates.horizonToEquitorial(zenithAltAz, SpaceTimeController.get_location(), SpaceTimeController.get_now());
+  var raPart = -((zenith.get_RA() - 6) / 24 * (Math.PI * 2));
+  var decPart = -(zenith.get_dec() / 360 * (Math.PI * 2));
+  var raText = Coordinates.formatDMS(zenith.get_RA());
+  var mat = Matrix3d._rotationY(-raPart - Math.PI);
+  mat._multiply(Matrix3d._rotationX(decPart));
+  mat.invert();
+  makeNSEWText();
+  var matOldWorld = renderContext.get_world().clone();
+  var matOldWorldBase = renderContext.get_worldBase().clone();
+  renderContext.set_worldBase(Matrix3d.multiplyMatrix(mat, renderContext.get_world()));
+  renderContext.set_world(renderContext.get_worldBase().clone());
+  renderContext.makeFrustum();
+  nsewBatch.viewTransform = Matrix3d.invertMatrix(mat);
+  nsewBatch.draw(renderContext, opacity, drawColor);
+  renderContext.set_worldBase(matOldWorldBase);
+  renderContext.set_world(matOldWorld);
+  renderContext.makeFrustum();
+  return true;
 }
 
 const GLYPH_CACHE = function(): GlyphCache {
@@ -377,6 +402,7 @@ export function drawSkyOverlays() {
     if (Settings.get_active().get_showAltAzGridText()) {
         Grids.drawAltAzGridText(this.renderContext, 1, Settings.get_active().get_altAzGridColor());
     }
+    drawNSEWText(this.renderContext, 1, Settings.get_active().get_altAzGridColor());
     if (Settings.get_active().get_showPrecessionChart()) {
         Grids.drawPrecessionChart(this.renderContext, 1, Settings.get_active().get_precessionChartColor());
     }
