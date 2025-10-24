@@ -674,7 +674,22 @@ const sliderValue = computed({
   }
 });
 
-const middayAltAz = computed(() => getSunPositionAtTime(new Date(0.5 * (startTime.value + endTime.value))));
+const middayTime = computed(() => 0.5 * (startTime.value + endTime.value));
+const middayAltAz = computed(() => getSunPositionAtTime(new Date(middayTime.value)));
+const highAltDeg = 70;
+const highAltTimes = computed(() => {
+  const { rising: start, setting: end} = getTimeforSunAlt(highAltDeg, middayTime.value);
+  return { start, end }; 
+});
+const highAltCoordinates = computed(() => {
+  if (!(highAltTimes.value.start && highAltTimes.value.end)) {
+    return { start: null, end : null };
+  }
+  return {
+    start: getSunPositionAtTime(new Date(highAltTimes.value.start)),
+    end: getSunPositionAtTime(new Date(highAltTimes.value.end)),
+  };
+});
 
 const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
@@ -1046,6 +1061,7 @@ function selectSheet(sheetType: SheetType | null) {
 
 function resetView(zoomDeg?: number, withAzOffset=true) {
   const time = store.currentTime;
+  const t = time.getTime();
 
   const latRad = selectedLocation.value.latitudeDeg * D2R;
   const lonRad = selectedLocation.value.longitudeDeg * D2R;
@@ -1055,16 +1071,28 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
   let altDeg = 33;
 
   const middayAltDeg = middayAltAz.value.altRad * R2D;
-  if (middayAltDeg > 70) {
-    const t = (time.getTime() - startTime.value) / (endTime.value - startTime.value);
-    const f = -2 * Math.abs(0.5 - t) + 1;
-    altDeg = middayAltDeg * f;
+  if (middayAltDeg > highAltDeg) {
+
+    // Altitude modifications
+    const dayFrac  = (time.getTime() - startTime.value) / (endTime.value - startTime.value);
+    const dayAzFactor = -2 * Math.abs(0.5 - dayFrac) + 1;
+    altDeg = middayAltDeg * dayAzFactor;
     altDeg = Math.max(90 - Math.abs(altDeg - 90), 33);
+
+    // Azimuth modifications
+    const { start: highStartTime, end: highEndTime } = highAltTimes.value;
+    const { start, end } = highAltCoordinates.value;
+    if (highStartTime && highEndTime && start && end && t > highStartTime && t < highEndTime) {
+      const topStartAz = start.azRad;
+      const topEndAz = end.azRad;
+      const tTop = (t - highStartTime) / (highEndTime - highStartTime);
+      az = tTop * (topEndAz - topStartAz) + topStartAz;
+    }
   }
   const alt = altDeg * D2R;
 
-  if (time.getTime() > 0 && withAzOffset) {
-    const offset = (azOffsetSlope * (time.getTime() - startTime.value) + startAzOffset);
+  if (t > 0 && withAzOffset) {
+    const offset = (azOffsetSlope * (t - startTime.value) + startAzOffset);
     const middayAzDeg = middayAltAz.value.azRad * R2D;
     const peakNorth = Math.min(Math.abs(middayAzDeg), Math.abs(middayAzDeg - 360)) < Math.abs(middayAzDeg - 180);
     const sgn = peakNorth ? -1 : 1;
