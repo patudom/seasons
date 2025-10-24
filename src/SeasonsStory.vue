@@ -674,6 +674,8 @@ const sliderValue = computed({
   }
 });
 
+const middayAltAz = computed(() => getSunPositionAtTime(new Date(0.5 * (startTime.value + endTime.value))));
+
 const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
   return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
@@ -1052,10 +1054,7 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
   let az = sunAltAz.azRad;
   let altDeg = 33;
 
-  const tMidday = 0.5 * (startTime.value + endTime.value);
-  const middayAltAz = getSunPositionAtTime(new Date(tMidday));
-  const middayAltDeg = middayAltAz.altRad * R2D;
-  
+  const middayAltDeg = middayAltAz.value.altRad * R2D;
   if (middayAltDeg > 70) {
     const t = (time.getTime() - startTime.value) / (endTime.value - startTime.value);
     const f = -2 * Math.abs(0.5 - t) + 1;
@@ -1066,7 +1065,9 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
 
   if (time.getTime() > 0 && withAzOffset) {
     const offset = (azOffsetSlope * (time.getTime() - startTime.value) + startAzOffset);
-    const sgn = selectedLocation.value.latitudeDeg >= 0 ? 1 : -1;
+    const middayAzDeg = middayAltAz.value.azRad * R2D;
+    const peakNorth = Math.min(Math.abs(middayAzDeg), Math.abs(middayAzDeg - 360)) < Math.abs(middayAzDeg - 180);
+    const sgn = peakNorth ? -1 : 1;
     az += (offset * sgn);
   }
   const raDec = horizontalToEquatorial(
