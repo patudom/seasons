@@ -152,6 +152,12 @@
             <div>{{ eventName(event) }}</div>
           </button>
         </div>
+        <!-- <div>
+          <p>Current Time: {{ currentTime  }}</p>
+          <p>Clockrate: {{  store.clockRate }}</p>
+          <p>At or after endtime: {{ currentTime >= endTime }}</p>
+          <p>At or before starttime: {{ currentTime <= startTime }}</p>
+        </div> -->
       </div>
     </div>
     
@@ -195,7 +201,9 @@
             Midday
           </v-chip>
           <v-chip
-            @click="sliderValue = sliderMax"
+            @click="() => {
+              sliderValue = sliderMax;
+            }"
             :color="accentColor"
             variant="elevated"
             size="x-small"
@@ -208,13 +216,14 @@
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
       <speed-control
-        v-model="playing" 
+        :model-value="playing" 
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
         :maxSpeed="10000"
+        :rateDelta="5"
         show-status
-        hideMoreControls="true"
+        :hideMoreControls="true"
         @reset="() => {
           selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
@@ -222,9 +231,7 @@
         @update:reverse="(_reverse: boolean) => {
           wwtStats.reverseCount += 1;
         }"
-        @update:playing="(_playing: boolean) => {
-          wwtStats.playPauseCount += 1;
-        }"
+        @update:model-value="handlePlaying"
         @slow-down="(rate: number) => {
           wwtStats.slowdowns.push(rate);
         }"
@@ -789,6 +796,17 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   store.setTime(new Date(newSelectedTime));
 }
 
+function handlePlaying( _playing ) {
+  // Auto-pause when time reaches sunset or sunrise, accounting for playing direction
+  if (playing.value && ((currentTime.value.getTime() >= endTime.value && store.clockRate >= 0) || ( currentTime.value.getTime() <= startTime.value && store.clockRate <= 0))) {
+    playing.value = false;
+    return;
+  }  
+
+  playing.value = _playing;
+  wwtStats.playPauseCount += 1;
+}
+
 function goToEvent(event: EventOfInterest) {
   const day = datesOfInterest[event].date;
   const time = day.getTime();
@@ -1122,6 +1140,12 @@ watch(selectedLocation, (location: LocationDeg, oldLocation: LocationDeg) => {
 });
 
 watch(currentTime, (_time: Date) => {
+  // Auto-pause when time reaches sunset or sunrise, accounting for playing direction
+  if (playing.value && ((_time.getTime() >= endTime.value && store.clockRate >= 0) || ( _time.getTime() <= startTime.value && store.clockRate <= 0))) {
+    playing.value = false;
+    return;
+  }  
+
   resetView(store.zoomDeg);
 });
 
@@ -1132,13 +1156,6 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
 });
 
 watch(inNorthernHemisphere, (_inNorth: boolean) => resetAltAzGridText());
-
-// Auto-pause when time exceeds sunset
-watch(currentTime, (newTime: Date) => {
-  if (playing.value && newTime.getTime() >= endTime.value) {
-    playing.value = false;
-  }
-});
 
 </script>
 
