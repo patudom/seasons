@@ -869,13 +869,9 @@ const wwtStats = markRaw({
   startTime: Date.now(),
 });
 
-// const selectedLocation = ref<LocationDeg>({
-//   latitudeDeg: 24 + (51 / 60),
-//   longitudeDeg: -(85 + 47 / 60),
-// });
 const selectedLocation = ref<LocationDeg>({
-  latitudeDeg: 0.01,
-  longitudeDeg: -85.75,
+  longitudeDeg: -71.1056,
+  latitudeDeg: 42.3581,
 });
 const selectedLocationInfo = ref<LocationInfo>({ name: "", latitude: "", longitude: "" });
 const searchErrorMessage = ref<string | null>(null);
@@ -1117,7 +1113,6 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
     // Azimuth modifications
     const { start: highStartTime, end: highEndTime } = highAltTimes.value;
     const { start, end } = highAltCoordinates.value;
-    console.log(start, end);
     if (highStartTime && highEndTime && start && end && t > highStartTime && t < highEndTime) {
       const topStartAz = start.azRad;
       let topEndAz = end.azRad;
@@ -1129,7 +1124,6 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
 
       const tTop = (t - highStartTime) / (highEndTime - highStartTime);
       az = tTop * (topEndAz - topStartAz) + topStartAz;
-      console.log(az);
     }
   }
   const alt = altDeg * D2R;
