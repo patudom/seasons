@@ -841,8 +841,8 @@ const wwtStats = markRaw({
 });
 
 const selectedLocation = ref<LocationDeg>({
-  longitudeDeg: -71.1056,
-  latitudeDeg: 42.3581,
+  latitudeDeg: 24 + (51 / 60),
+  longitudeDeg: -(85 + 47 / 60),
 });
 const selectedLocationInfo = ref<LocationInfo>({ name: "", latitude: "", longitude: "" });
 const searchErrorMessage = ref<string | null>(null);
@@ -1080,21 +1080,26 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
     altDeg = Math.max(90 - Math.abs(altDeg - 90), 33);
 
     // Azimuth modifications
+    const middayAzDeg = middayAltAz.value.azRad * R2D;
+    const peakNorth = Math.min(Math.abs(middayAzDeg), Math.abs(middayAzDeg - 360)) < Math.abs(middayAzDeg - 180);
     const { start: highStartTime, end: highEndTime } = highAltTimes.value;
     const { start, end } = highAltCoordinates.value;
+    console.log(start, end);
     if (highStartTime && highEndTime && start && end && t > highStartTime && t < highEndTime) {
       const topStartAz = start.azRad;
-      const topEndAz = end.azRad;
+      let topEndAz = end.azRad;
+      if (!peakNorth && (topStartAz > 180 || topEndAz < 180) {
+        topEndAz -= 2 * Math.PI;
+      } 
       const tTop = (t - highStartTime) / (highEndTime - highStartTime);
       az = tTop * (topEndAz - topStartAz) + topStartAz;
+      console.log(az);
     }
   }
   const alt = altDeg * D2R;
 
   if (t > 0 && withAzOffset) {
     const offset = (azOffsetSlope * (t - startTime.value) + startAzOffset);
-    const middayAzDeg = middayAltAz.value.azRad * R2D;
-    const peakNorth = Math.min(Math.abs(middayAzDeg), Math.abs(middayAzDeg - 360)) < Math.abs(middayAzDeg - 180);
     const sgn = peakNorth ? -1 : 1;
     az += (offset * sgn);
   }
