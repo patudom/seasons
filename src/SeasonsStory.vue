@@ -747,7 +747,7 @@ const seasonalColors = {
   spring: '#FFA0D7',  
   summer: '#F7EB67',  
   autumn: '#FEB770',  
-  winter: '#91C2F9'   
+  winter: '#c1e2fc'   
 };
 
 const accentColor = computed(() => {
