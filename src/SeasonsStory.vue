@@ -132,6 +132,16 @@
           fa-size="sm"
         >
         </icon-button>
+        <div
+          class="options"
+        >
+          <v-checkbox
+            v-model="forceCamera"
+            label="Follow Sun"
+            density="compact"
+            hide-details
+          />
+        </div>
       </div>
       <div id="right-buttons">
         <div
@@ -152,6 +162,12 @@
             <div>{{ eventName(event) }}</div>
           </button>
         </div>
+        <!-- <div>
+          <p>Current Time: {{ currentTime  }}</p>
+          <p>Clockrate: {{  store.clockRate }}</p>
+          <p>At or after endtime: {{ currentTime >= endTime }}</p>
+          <p>At or before starttime: {{ currentTime <= startTime }}</p>
+        </div> -->
       </div>
     </div>
     
@@ -195,7 +211,9 @@
             Midday
           </v-chip>
           <v-chip
-            @click="sliderValue = sliderMax"
+            @click="() => {
+              sliderValue = sliderMax;
+            }"
             :color="accentColor"
             variant="elevated"
             size="x-small"
@@ -208,13 +226,14 @@
       
       <!-- eslint-disable-next-line vue/no-v-model-argument -->
       <speed-control
-        v-model="playing" 
+        :model-value="playing" 
         :store="store"
         :color="accentColor" 
         :defaultRate="1000"
         :maxSpeed="10000"
-        show-text
-        hideMoreControls="true"
+        :rateDelta="5"
+        show-status
+        :hideMoreControls="true"
         @reset="() => {
           selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
@@ -222,9 +241,7 @@
         @update:reverse="(_reverse: boolean) => {
           wwtStats.reverseCount += 1;
         }"
-        @update:playing="(_playing: boolean) => {
-          wwtStats.playPauseCount += 1;
-        }"
+        @update:model-value="handlePlaying"
         @slow-down="(rate: number) => {
           wwtStats.slowdowns.push(rate);
         }"
@@ -590,7 +607,7 @@ import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textFor
 
 import { useTimezone } from "./timezones";
 import { horizontalToEquatorial } from "./utils";
-import { resetAltAzGridText, makeAltAzGridText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
+import { resetNSEWText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
 import { formatInTimeZone } from "date-fns-tz";
@@ -624,6 +641,7 @@ const backgroundImagesets = reactive<BackgroundImageset[]>([]);
 const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
 const positionSet = ref(false);
+const forceCamera = ref(true);
 
 const tab = ref(0);
 
@@ -811,6 +829,17 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   
   // Update time in WWT to reflect the new location's timing
   store.setTime(new Date(newSelectedTime));
+}
+
+function handlePlaying( _playing ) {
+  // Auto-pause when time reaches sunset or sunrise, accounting for playing direction
+  if (playing.value && ((currentTime.value.getTime() >= endTime.value && store.clockRate >= 0) || ( currentTime.value.getTime() <= startTime.value && store.clockRate <= 0))) {
+    playing.value = false;
+    return;
+  }  
+
+  playing.value = _playing;
+  wwtStats.playPauseCount += 1;
 }
 
 function goToEvent(event: EventOfInterest) {
@@ -1125,7 +1154,6 @@ function updateWWTLocation(location: LocationDeg) {
 }
 
 function doWWTModifications() {
-  Grids._makeAltAzGridText = makeAltAzGridText;
   Grids.drawEcliptic = drawEcliptic;
 
   // We need to render one frame ahead of time
@@ -1183,7 +1211,20 @@ watch(selectedLocation, (location: LocationDeg, oldLocation: LocationDeg) => {
 });
 
 watch(currentTime, (_time: Date) => {
-  resetView(store.zoomDeg);
+  // Auto-pause when time reaches sunset or sunrise, accounting for playing direction
+  if (playing.value && ((_time.getTime() >= endTime.value && store.clockRate >= 0) || ( _time.getTime() <= startTime.value && store.clockRate <= 0))) {
+    playing.value = false;
+    return;
+  }  
+  if (forceCamera.value) {
+    resetView(store.zoomDeg);
+  }
+});
+
+watch(forceCamera, (value: boolean) => {
+  if (value) {
+    resetView();
+  }
 });
 
 watch(selectedEvent, (event: EventOfInterest | null) => {
@@ -1192,7 +1233,7 @@ watch(selectedEvent, (event: EventOfInterest | null) => {
   }
 });
 
-watch(inNorthernHemisphere, (_inNorth: boolean) => resetAltAzGridText());
+watch(inNorthernHemisphere, (_inNorth: boolean) => resetNSEWText());
 
 </script>
 
@@ -1518,19 +1559,28 @@ video {
   pointer-events: auto;
 }
 
-.event-button {
+.event-button, .options {
   font-size: 0.9rem;
   background: black;
-  border: 1px solid white;
+  border: 1px solid;
   border-radius: 5px;
   padding: 0.5rem;
-  width: 100%;
   pointer-events: auto;
+}
+
+.event-button {
+  border-color: white;
+  width: 100%;
 
   &.selected {
     color: var(--accent-color);
     border-color: var(--accent-color);
   }
+}
+
+.options {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 .event-title {
@@ -1582,6 +1632,13 @@ video {
       display: none;
     }
   }  
+
+  #speed-text {
+    font-size: 1rem;
+    background-color: transparent !important;
+    color: var(--accent-color);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
 
 }
 
