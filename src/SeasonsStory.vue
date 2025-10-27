@@ -869,9 +869,13 @@ const wwtStats = markRaw({
   startTime: Date.now(),
 });
 
+// const selectedLocation = ref<LocationDeg>({
+//   latitudeDeg: 24 + (51 / 60),
+//   longitudeDeg: -(85 + 47 / 60),
+// });
 const selectedLocation = ref<LocationDeg>({
-  latitudeDeg: 24 + (51 / 60),
-  longitudeDeg: -(85 + 47 / 60),
+  latitudeDeg: 0.01,
+  longitudeDeg: -85.75,
 });
 const selectedLocationInfo = ref<LocationInfo>({ name: "", latitude: "", longitude: "" });
 const searchErrorMessage = ref<string | null>(null);
@@ -1100,6 +1104,8 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
   let altDeg = 33;
 
   const middayAltDeg = middayAltAz.value.altRad * R2D;
+  const middayAzDeg = middayAltAz.value.azRad * R2D;
+  const peakNorth = Math.min(Math.abs(middayAzDeg), Math.abs(middayAzDeg - 360)) < Math.abs(middayAzDeg - 180);
   if (middayAltDeg > highAltDeg) {
 
     // Altitude modifications
@@ -1109,17 +1115,18 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
     altDeg = Math.max(90 - Math.abs(altDeg - 90), 33);
 
     // Azimuth modifications
-    const middayAzDeg = middayAltAz.value.azRad * R2D;
-    const peakNorth = Math.min(Math.abs(middayAzDeg), Math.abs(middayAzDeg - 360)) < Math.abs(middayAzDeg - 180);
     const { start: highStartTime, end: highEndTime } = highAltTimes.value;
     const { start, end } = highAltCoordinates.value;
     console.log(start, end);
     if (highStartTime && highEndTime && start && end && t > highStartTime && t < highEndTime) {
       const topStartAz = start.azRad;
       let topEndAz = end.azRad;
-      if (!peakNorth && (topStartAz > 180 || topEndAz < 180) {
+      const tSouth = (Math.PI - topStartAz) / (topEndAz - topStartAz);
+      const passThroughSouth = tSouth >= 0 && tSouth <= 1;
+      if (peakNorth === passThroughSouth) {
         topEndAz -= 2 * Math.PI;
-      } 
+      }
+
       const tTop = (t - highStartTime) / (highEndTime - highStartTime);
       az = tTop * (topEndAz - topStartAz) + topStartAz;
       console.log(az);
