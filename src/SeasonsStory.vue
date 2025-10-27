@@ -123,6 +123,16 @@
             />
           </v-card>
         </v-dialog>
+        <div
+          class="options"
+        >
+          <v-checkbox
+            v-model="forceCamera"
+            label="Auto-track Sun"
+            density="compact"
+            hide-details
+          />
+        </div>
         <icon-button
           v-model="showTextSheet"
           fa-icon="info"
@@ -132,16 +142,6 @@
           fa-size="sm"
         >
         </icon-button>
-        <div
-          class="options"
-        >
-          <v-checkbox
-            v-model="forceCamera"
-            label="Follow Sun"
-            density="compact"
-            hide-details
-          />
-        </div>
       </div>
       <div id="right-buttons">
         <div
@@ -1295,22 +1295,13 @@ body {
 #left-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
   align-items: flex-start;
 }
 
 #left-buttons .icon-wrapper {
   width: 30%;
   flex-shrink: 0;
-}
-
-#center-buttons {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
 }
 
 #right-buttons {
@@ -1498,7 +1489,7 @@ video {
   pointer-events: auto;
 }
 
-.event-button, .options {
+.event-button {
   font-size: 0.9rem;
   background: black;
   border: 1px solid;
@@ -1519,7 +1510,8 @@ video {
 
 .options {
   color: var(--accent-color);
-  border-color: var(--accent-color);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  pointer-events: auto;
 }
 
 .event-title {
