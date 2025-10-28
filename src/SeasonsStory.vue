@@ -155,16 +155,12 @@
         </div>
         <div class="date-buttons">
           <button
-            :class="[
-              (event === 'today' && selectedDateType === 'today') || 
-              (event !== 'today' && event === selectedEvent) || 
-              (selectedDateType === 'custom' && event === 'custom') ? 'selected' : ''
-            ]"
+            :class="[event === selectedEvent ? 'selected' : '']"
             v-for="([event], index) in sortedDatesOfInterest"
             v-ripple
             class="event-button"
             :key="index"
-            @click="goToDate(event)"
+            @click="selectedEvent = event;"
           >
             <div>{{ eventName(event) }}</div>
           </button>
@@ -287,17 +283,17 @@
           selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
         }"
-        @update:reverse="(_reverse) => {
+        @update:reverse="(_reverse: boolean) => {
           wwtStats.reverseCount += 1;
         }"
         @update:model-value="handlePlaying"
-        @slow-down="(rate) => {
+        @slow-down="(rate: number) => {
           wwtStats.slowdowns.push(rate);
         }"
-        @speed-up="(rate) => {
+        @speed-up="(rate: number) => {
           wwtStats.speedups.push(rate);
         }"
-        @set-rate="(rate) => {
+        @set-rate="(rate: number) => {
           wwtStats.rateSelections.push(rate);
         }"
         />
@@ -763,32 +759,45 @@ const sortedDatesOfInterest = computed(() => {
   const sortedEntries = entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
   
   // Add "today" as the first entry
-  const today: [DateSelection, AstroTime] = ["today", { date: new Date() } as AstroTime];
+  const today: [EventOfInterest, AstroTime] = ["today", { date: new Date() } as AstroTime];
   return [today, ...sortedEntries];
 });
 
 const EVENTS_OF_INTEREST = [
+  "today",
   "mar_equinox",
   "jun_solstice",
   "sep_equinox",
   "dec_solstice",
+  "custom",
 ] as const;
 type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
-type DateSelection = EventOfInterest | "today" | "custom";
 
 const selectedEvent = ref<EventOfInterest | null>(null);
-const selectedDateType = ref<DateSelection | null>(null);
+// const selectedDateType = ref<DateSelection | null>(null);
 const selectedCustomDate = ref<Date | null>(null);
 const showDatePicker = ref(false);
 
-const handleDateSelection = (date: Date | null) => {
-  if (date) {
-    goToDate('custom', date);
-    showDatePicker.value = false;
+const getDateForEvent = (event: EventOfInterest): Date => {
+  if (event === "today") {
+    return new Date();
+  } else if (event === "custom" && selectedCustomDate.value) {
+    return selectedCustomDate.value;
+  } else {
+    return datesOfInterest[event].date;
   }
 };
 
-function eventName(event: DateSelection): string {
+
+const handleDateSelection = (date: Date | null) => {
+  if (date) {
+    showDatePicker.value = false;
+    selectedCustomDate.value = date;
+    selectedEvent.value = 'custom';
+  }
+};
+
+function eventName(event: EventOfInterest): string {
   const isSmall = smallSize.value;
   switch (event) {
   case "today":
@@ -880,51 +889,38 @@ const seasonalColors = {
 };
 
 const accentColor = computed(() => {
+  const event = selectedEvent.value;
+  if (!event) {
+    return seasonalColors.spring;
+  }
   const latitude = selectedLocation.value.latitudeDeg;
-  
   // Handle "today" case
-  if (selectedDateType.value === 'today') {
+  if (event === 'today') {
     const today = new Date();
     const currentSeason = getCurrentSeasonForDate(today, latitude);
     return seasonalColors[currentSeason];
   }
   
   // Handle custom date case
-  if (selectedDateType.value === 'custom' && selectedCustomDate.value) {
+  if (event === 'custom' && selectedCustomDate.value) {
     const customSeason = getCurrentSeasonForDate(selectedCustomDate.value, latitude);
     return seasonalColors[customSeason];
   }
   
-  // Handle seasonal event case
-  const event = selectedEvent.value;
-  if (!event) {
-    return seasonalColors.spring;
-  }
   const currentSeason = getCurrentSeason(event, latitude);
   return seasonalColors[currentSeason];
 });
 
 const displayedDate = computed(() => {
-  if (selectedDateType.value === 'today') {
+  if (selectedEvent.value === 'today') {
     return new Date();
-  } else if (selectedDateType.value === 'custom' && selectedCustomDate.value) {
+  } else if (selectedEvent.value === 'custom' && selectedCustomDate.value) {
     return selectedCustomDate.value;
   } else if (selectedEvent.value) {
     return datesOfInterest[selectedEvent.value].date;
   }
   return new Date(); // fallback
 });
-
-// const displayedDateName = computed(() => {
-//   if (selectedDateType.value === 'today') {
-//     return 'Today';
-//   } else if (selectedDateType.value === 'custom') {
-//     return 'Custom Date';
-//   } else if (selectedEvent.value) {
-//     return eventName(selectedEvent.value);
-//   }
-//   return 'Today'; // fallback
-// });
 
 function dayString(date: Date) {
   return date.toLocaleString("en-US", {
@@ -934,8 +930,7 @@ function dayString(date: Date) {
   });
 }
 
-function getStartAndEndTimes(event: EventOfInterest): [Date, Date] {
-  const day = datesOfInterest[event].date;
+function getStartAndEndTimes(day: Date): [Date, Date] {
   const time = day.getTime();
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
@@ -959,7 +954,7 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   if (selectedEvent.value === null) {
     return;
   }
-  const [start, end] = getStartAndEndTimes(selectedEvent.value);
+  const [start, end] = getStartAndEndTimes(getDateForEvent(selectedEvent.value));
   startTime.value = start.getTime();
   endTime.value = end.getTime();
 
@@ -986,66 +981,21 @@ function handlePlaying( _playing ) {
   wwtStats.playPauseCount += 1;
 }
 
-function getStartAndEndTimesForDate(date: Date): [Date, Date] {
-  const time = date.getTime();
-  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
+function goToEvent(event: EventOfInterest) {
+  const day = getDateForEvent(event);
+  const time = day.getTime();
 
-  let start: Date;
-  let end: Date;
-  if (dayStart === null || dayEnd === null) {
-    start = new Date(time); 
-    start.setHours(0, 0, 0, 0);
-    start = new Date(start.getTime() - selectedTimezoneOffset.value);
-    end = new Date(start.getTime() + 86400000 - 60);
-  } else {
-    start = new Date(dayStart);
-    end = new Date(dayEnd);
-  }
-
-  return [start, end];
-}
-
-function goToDate(dateSelection: DateSelection, customDate?: Date) {
-  let targetDate: Date;
-  
-  if (dateSelection === "today") {
-    targetDate = new Date();
-  } else if (dateSelection === "custom" && customDate) {
-    targetDate = customDate;
-  } else {
-    // It's one of the seasonal events
-    const eventKey = dateSelection as EventOfInterest;
-    targetDate = datesOfInterest[eventKey].date;
-  }
-
-  const time = targetDate.getTime();
-  const [start, end] = getStartAndEndTimesForDate(targetDate);
+  const [start, end] = getStartAndEndTimes(day);
   azOffsetSlope = (endAzOffset - startAzOffset) / (end.getTime() - start.getTime());
 
   store.setTime(new Date(time));
   const timeStart = start.getTime();
   store.setTime(new Date(timeStart));
-  startTime.value = timeStart;
+  startTime.value = timeStart; // - timeStart % (24 * 60 * 60 * 1000) - selectedTimezoneOffset.value; // round down to the start of the day
+
   endTime.value = end.getTime();
 
-  // Update state
-  selectedDateType.value = dateSelection;
-  if (dateSelection === "custom") {
-    selectedCustomDate.value = customDate || null;
-    selectedEvent.value = null;
-  } else if (dateSelection === "today") {
-    selectedCustomDate.value = null;
-    selectedEvent.value = null;
-  } else {
-    selectedCustomDate.value = null;
-    selectedEvent.value = dateSelection;
-  }
-
   setTimeout(() => resetView(), 100);
-}
-
-function goToEvent(event: EventOfInterest) {
-  goToDate(event);
 }
 
 const wwtStats = markRaw({
@@ -1202,8 +1152,7 @@ onMounted(() => {
     doWWTModifications();
 
     // Set the initial event after everything is ready
-    const firstDateSelection = sortedDatesOfInterest.value[0][0];
-    goToDate(firstDateSelection);
+    selectedEvent.value = sortedDatesOfInterest.value[0][0];
 
     // If there are layers to set up, do that here!
     positionSet.value = true;
