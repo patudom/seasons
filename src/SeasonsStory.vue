@@ -180,13 +180,13 @@
             
             <v-dialog
               v-model="showDatePicker"
-              max-width="320px"
+              max-width="fit-content"
             >
               <v-card>
-                <v-card-title class="text-h6">
+                <v-card-title class="text-h6 mb-0 mt-2">
                   Select Date
                 </v-card-title>
-                <v-card-text>
+                <v-card-text class="my-0 mx=2 pa-0">
                   <v-date-picker
                     v-model="selectedCustomDate"
                     @update:model-value="handleDateSelection"
@@ -194,8 +194,7 @@
                     hide-header
                   />
                 </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
+                <v-card-actions class="my-0">
                   <v-btn
                     text
                     @click="showDatePicker = false"
