@@ -145,22 +145,71 @@
       </div>
       <div id="right-buttons">
         <div
+          id="date-title"
           class="event-title"
         >
           <h4>Displayed Date</h4>
+          <div>
+            <div>{{ dayString(displayedDate) }}</div>
+          </div>
         </div>
         <div class="date-buttons">
           <button
-            :class="[event === selectedEvent ? 'selected' : '']"
-            v-for="([event, value], index) in sortedDatesOfInterest"
+            :class="[
+              (event === 'today' && selectedDateType === 'today') || 
+              (event !== 'today' && event === selectedEvent) || 
+              (selectedDateType === 'custom' && event === 'custom') ? 'selected' : ''
+            ]"
+            v-for="([event], index) in sortedDatesOfInterest"
             v-ripple
             class="event-button"
             :key="index"
-            @click="selectedEvent = event;"
+            @click="goToDate(event)"
           >
-            <div>{{ dayString(value.date) }}</div>
             <div>{{ eventName(event) }}</div>
           </button>
+          
+          <!-- Calendar date picker -->
+          <div class="date-picker-section date-button">
+            <button
+              @click="showDatePicker = !showDatePicker"
+              :color="accentColor"
+              variant="outlined"
+              size="small"
+              class="calendar-button event-button"
+            >
+              <v-icon left>mdi-calendar</v-icon>
+              Choose Any Date
+            </button>
+            
+            <v-dialog
+              v-model="showDatePicker"
+              max-width="320px"
+            >
+              <v-card>
+                <v-card-title class="text-h6">
+                  Select Date
+                </v-card-title>
+                <v-card-text>
+                  <v-date-picker
+                    v-model="selectedCustomDate"
+                    @update:model-value="handleDateSelection"
+                    :color="accentColor"
+                    hide-header
+                  />
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    text
+                    @click="showDatePicker = false"
+                  >
+                    Cancel
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </div>
         </div>
         <!-- <div>
           <p>Current Time: {{ currentTime  }}</p>
@@ -238,17 +287,17 @@
           selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
         }"
-        @update:reverse="(_reverse: boolean) => {
+        @update:reverse="(_reverse) => {
           wwtStats.reverseCount += 1;
         }"
         @update:model-value="handlePlaying"
-        @slow-down="(rate: number) => {
+        @slow-down="(rate) => {
           wwtStats.slowdowns.push(rate);
         }"
-        @speed-up="(rate: number) => {
+        @speed-up="(rate) => {
           wwtStats.speedups.push(rate);
         }"
-        @set-rate="(rate: number) => {
+        @set-rate="(rate) => {
           wwtStats.rateSelections.push(rate);
         }"
         />
@@ -711,7 +760,11 @@ const highAltCoordinates = computed(() => {
 
 const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
-  return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+  const sortedEntries = entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+  
+  // Add "today" as the first entry
+  const today: [DateSelection, AstroTime] = ["today", { date: new Date() } as AstroTime];
+  return [today, ...sortedEntries];
 });
 
 const EVENTS_OF_INTEREST = [
@@ -721,19 +774,35 @@ const EVENTS_OF_INTEREST = [
   "dec_solstice",
 ] as const;
 type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
+type DateSelection = EventOfInterest | "today" | "custom";
 
 const selectedEvent = ref<EventOfInterest | null>(null);
+const selectedDateType = ref<DateSelection | null>(null);
+const selectedCustomDate = ref<Date | null>(null);
+const showDatePicker = ref(false);
 
-function eventName(event: EventOfInterest): string {
+const handleDateSelection = (date: Date | null) => {
+  if (date) {
+    goToDate('custom', date);
+    showDatePicker.value = false;
+  }
+};
+
+function eventName(event: DateSelection): string {
+  const isSmall = smallSize.value;
   switch (event) {
+  case "today":
+    return "Today";
   case "mar_equinox":
-    return "Equinox";
+    return isSmall ? "Mar Equinox" : "March Equinox";
   case "jun_solstice":
-    return "Solstice";
+    return isSmall ? "Jun Solstice" : "June Solstice";
   case "sep_equinox":
-    return "Equinox";
+    return isSmall ? "Sep Equinox" : "September Equinox";
   case "dec_solstice":
-    return "Solstice";
+    return isSmall ? "Dec Solstice" : "December Solstice";
+  case "custom":
+    return "Custom";
   }
 }
 
@@ -765,6 +834,44 @@ function getCurrentSeason(event: string, latitude: number): 'spring' | 'summer' 
   return "spring"; // fallback
 }
 
+function getCurrentSeasonForDate(date: Date, latitude: number): 'spring' | 'summer' | 'autumn' | 'winter' {
+  const year = date.getFullYear();
+  const seasonsForYear = Seasons(year);
+  
+  // Get the season dates for the year
+  const marEquinox = seasonsForYear.mar_equinox.date;
+  const junSolstice = seasonsForYear.jun_solstice.date;
+  const sepEquinox = seasonsForYear.sep_equinox.date;
+  const decSolstice = seasonsForYear.dec_solstice.date;
+  
+  // Determine which season the date falls into
+  let season: 'spring' | 'summer' | 'autumn' | 'winter';
+  
+  if (date >= marEquinox && date < junSolstice) {
+    season = 'spring';
+  } else if (date >= junSolstice && date < sepEquinox) {
+    season = 'summer';
+  } else if (date >= sepEquinox && date < decSolstice) {
+    season = 'autumn';
+  } else {
+    // Either before March equinox or after December solstice (winter)
+    season = 'winter';
+  }
+  
+  // Adjust for hemisphere
+  if (latitude < 0) {
+    // Southern hemisphere - seasons are opposite
+    switch (season) {
+    case 'spring': return 'autumn';
+    case 'summer': return 'winter';
+    case 'autumn': return 'spring';
+    case 'winter': return 'summer';
+    }
+  }
+  
+  return season;
+}
+
 const seasonalColors = {
   spring: '#FFA0D7',  
   summer: '#F7EB67',  
@@ -773,14 +880,51 @@ const seasonalColors = {
 };
 
 const accentColor = computed(() => {
+  const latitude = selectedLocation.value.latitudeDeg;
+  
+  // Handle "today" case
+  if (selectedDateType.value === 'today') {
+    const today = new Date();
+    const currentSeason = getCurrentSeasonForDate(today, latitude);
+    return seasonalColors[currentSeason];
+  }
+  
+  // Handle custom date case
+  if (selectedDateType.value === 'custom' && selectedCustomDate.value) {
+    const customSeason = getCurrentSeasonForDate(selectedCustomDate.value, latitude);
+    return seasonalColors[customSeason];
+  }
+  
+  // Handle seasonal event case
   const event = selectedEvent.value;
   if (!event) {
     return seasonalColors.spring;
   }
-  const latitude = selectedLocation.value.latitudeDeg;
   const currentSeason = getCurrentSeason(event, latitude);
   return seasonalColors[currentSeason];
 });
+
+const displayedDate = computed(() => {
+  if (selectedDateType.value === 'today') {
+    return new Date();
+  } else if (selectedDateType.value === 'custom' && selectedCustomDate.value) {
+    return selectedCustomDate.value;
+  } else if (selectedEvent.value) {
+    return datesOfInterest[selectedEvent.value].date;
+  }
+  return new Date(); // fallback
+});
+
+// const displayedDateName = computed(() => {
+//   if (selectedDateType.value === 'today') {
+//     return 'Today';
+//   } else if (selectedDateType.value === 'custom') {
+//     return 'Custom Date';
+//   } else if (selectedEvent.value) {
+//     return eventName(selectedEvent.value);
+//   }
+//   return 'Today'; // fallback
+// });
 
 function dayString(date: Date) {
   return date.toLocaleString("en-US", {
@@ -842,21 +986,66 @@ function handlePlaying( _playing ) {
   wwtStats.playPauseCount += 1;
 }
 
-function goToEvent(event: EventOfInterest) {
-  const day = datesOfInterest[event].date;
-  const time = day.getTime();
+function getStartAndEndTimesForDate(date: Date): [Date, Date] {
+  const time = date.getTime();
+  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
-  const [start, end] = getStartAndEndTimes(event);
+  let start: Date;
+  let end: Date;
+  if (dayStart === null || dayEnd === null) {
+    start = new Date(time); 
+    start.setHours(0, 0, 0, 0);
+    start = new Date(start.getTime() - selectedTimezoneOffset.value);
+    end = new Date(start.getTime() + 86400000 - 60);
+  } else {
+    start = new Date(dayStart);
+    end = new Date(dayEnd);
+  }
+
+  return [start, end];
+}
+
+function goToDate(dateSelection: DateSelection, customDate?: Date) {
+  let targetDate: Date;
+  
+  if (dateSelection === "today") {
+    targetDate = new Date();
+  } else if (dateSelection === "custom" && customDate) {
+    targetDate = customDate;
+  } else {
+    // It's one of the seasonal events
+    const eventKey = dateSelection as EventOfInterest;
+    targetDate = datesOfInterest[eventKey].date;
+  }
+
+  const time = targetDate.getTime();
+  const [start, end] = getStartAndEndTimesForDate(targetDate);
   azOffsetSlope = (endAzOffset - startAzOffset) / (end.getTime() - start.getTime());
 
   store.setTime(new Date(time));
   const timeStart = start.getTime();
   store.setTime(new Date(timeStart));
-  startTime.value = timeStart; // - timeStart % (24 * 60 * 60 * 1000) - selectedTimezoneOffset.value; // round down to the start of the day
-
+  startTime.value = timeStart;
   endTime.value = end.getTime();
 
+  // Update state
+  selectedDateType.value = dateSelection;
+  if (dateSelection === "custom") {
+    selectedCustomDate.value = customDate || null;
+    selectedEvent.value = null;
+  } else if (dateSelection === "today") {
+    selectedCustomDate.value = null;
+    selectedEvent.value = null;
+  } else {
+    selectedCustomDate.value = null;
+    selectedEvent.value = dateSelection;
+  }
+
   setTimeout(() => resetView(), 100);
+}
+
+function goToEvent(event: EventOfInterest) {
+  goToDate(event);
 }
 
 const wwtStats = markRaw({
@@ -1013,7 +1202,8 @@ onMounted(() => {
     doWWTModifications();
 
     // Set the initial event after everything is ready
-    selectedEvent.value = sortedDatesOfInterest.value[0][0];
+    const firstDateSelection = sortedDatesOfInterest.value[0][0];
+    goToDate(firstDateSelection);
 
     // If there are layers to set up, do that here!
     positionSet.value = true;
@@ -1584,6 +1774,45 @@ video {
   color: var(--accent-color);
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
+
+#date-title {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+
+  .displayed-date-info {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--accent-color);
+    border-radius: 5px;
+    padding: 0.5rem;
+    text-align: right;
+    pointer-events: auto;
+
+    .date-display {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .event-display {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+  }
+}
+
+.date-picker-section {
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: auto;
+  width: 100%;
+
+  .calendar-button {
+    font-size: 0.7rem;
+    text-transform: none;
+  }
+}
+
 
 .map-container {
   @media (max-width: 600px) {
