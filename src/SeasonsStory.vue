@@ -1153,6 +1153,7 @@ function aspectRatioSetup() {
   });
 
   observer.observe(canvas);
+  updateAzOffsets();
 }
 
 onMounted(() => {
