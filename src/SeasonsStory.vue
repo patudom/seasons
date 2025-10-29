@@ -694,8 +694,8 @@ const showLocationSelector = ref(false);
 
 const showHorizon = ref(true);
 
-const startAzOffset = 40 * D2R;
-const endAzOffset = -startAzOffset;
+let startAzOffset = 40 * D2R;
+let endAzOffset = -startAzOffset;
 let azOffsetSlope = 0;
 
 // Get the next 4 "dates of interest"
@@ -1131,6 +1131,30 @@ const selectedLocaledTimeDateString = computed(() => {
 
 const MAX_ZOOM = 500;
 
+function aspectRatioSetup() {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error WWTControl does have a canvas element (that's not TS-exposed)
+  const canvas = WWTControl.singleton.canvas as HTMLCanvasElement;
+
+  function updateAzOffsets() {
+    const aspectRatio = canvas.width / canvas.height;
+    startAzOffset = 0.35 * (60 * aspectRatio + 13.5) * D2R;
+    endAzOffset = -startAzOffset;
+  }
+
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.target === canvas) {
+        updateAzOffsets();
+        resetView();
+        return;
+      }
+    }
+  });
+
+  observer.observe(canvas);
+}
+
 onMounted(() => {
   updateSelectedLocationInfo();
   store.waitForReady().then(async () => {
@@ -1138,6 +1162,8 @@ onMounted(() => {
     skyBackgroundImagesets.forEach(iset => backgroundImagesets.push(iset));
 
     updateWWTLocation(selectedLocation.value);
+    
+    aspectRatioSetup();
 
     store.setClockSync(false);
     store.setClockRate(0);
