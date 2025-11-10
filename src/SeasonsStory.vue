@@ -61,8 +61,8 @@
 
             <!-- <icon-button
               v-model="showLocationSelector"
-              fa-icon="location-dot"
-              fa-size="sm"
+              icon="fa-location-dot"
+              size="sm"
               :color="accentColor"
               tooltip-text="Select Location"
               tooltip-location="start"
@@ -123,44 +123,107 @@
             />
           </v-card>
         </v-dialog>
-        <icon-button
-          v-model="showTextSheet"
-          fa-icon="info"
-          :color="accentColor"
-          :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
-          tooltip-location="start"
-          fa-size="sm"
-        >
-        </icon-button>
         <div
           class="options"
         >
           <v-checkbox
             v-model="forceCamera"
-            label="Follow Sun"
+            label="Auto-track Sun"
             density="compact"
             hide-details
           />
         </div>
+        <icon-button
+          v-model="showTextSheet"
+          icon="fa-info"
+          :color="accentColor"
+          :tooltip-text="showTextSheet ? 'Hide Info' : 'Learn More'"
+          tooltip-location="start"
+          size="sm"
+        >
+        </icon-button>
       </div>
       <div id="right-buttons">
         <div
+          id="date-title"
           class="event-title"
         >
+        <button 
+            @click="showDatePicker = !showDatePicker"
+            class="display-date-button mr-2"
+          >
+            <font-awesome-layers>
+              <font-awesome-icon
+                icon="calendar-week"
+                color="black"
+              />
+              <font-awesome-icon
+                icon="calendar-week"
+                :color="accentColor"
+                transform="shrink-3"
+              />
+            </font-awesome-layers>
+          </button>
           <h4>Displayed Date</h4>
-        </div>
+          </div>
+          <button id="date-info" @click="showDatePicker = !showDatePicker" class="event-button">
+            <div>{{ dayString(displayedDate) }}</div>
+            <div>Length of Day: {{ ((endTime - startTime) / 3600000).toFixed(1) }} hr</div>
+            <div>Distance to Sun: {{ sunDistance.toFixed(2) }} au</div>
+          </button>
+        
         <div class="date-buttons">
           <button
             :class="[event === selectedEvent ? 'selected' : '']"
-            v-for="([event, value], index) in sortedDatesOfInterest"
+            v-for="([event], index) in sortedDatesOfInterest"
             v-ripple
             class="event-button"
             :key="index"
             @click="selectedEvent = event;"
           >
-            <div>{{ dayString(value.date) }}</div>
             <div>{{ eventName(event) }}</div>
           </button>
+          
+          <!-- Calendar date picker -->
+          <div class="date-picker-section date-button">
+            <button
+              @click="showDatePicker = !showDatePicker"
+              :color="accentColor"
+              variant="outlined"
+              size="small"
+              class="calendar-button event-button"
+            >
+              <v-icon left>mdi-calendar</v-icon>
+              Choose Any Date
+            </button>
+            
+            <v-dialog
+              v-model="showDatePicker"
+              max-width="fit-content"
+            >
+              <v-card>
+                <v-card-title class="text-h6 mb-0 mt-2">
+                  Select Date
+                </v-card-title>
+                <v-card-text class="my-0 mx=2 pa-0">
+                  <v-date-picker
+                    :model-value="selectedCustomDate"
+                    @update:model-value="handleDateSelection"
+                    :color="accentColor"
+                    hide-header
+                  />
+                </v-card-text>
+                <v-card-actions class="my-0">
+                  <v-btn
+                    text
+                    @click="showDatePicker = false"
+                  >
+                    Cancel
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </div>
         </div>
         <!-- <div>
           <p>Current Time: {{ currentTime  }}</p>
@@ -229,11 +292,11 @@
         :model-value="playing" 
         :store="store"
         :color="accentColor" 
-        :defaultRate="1000"
-        :maxSpeed="10000"
-        :rateDelta="5"
+        :default-rate="1000"
+        :max-speed="10000"
+        :rate-delta="5"
         show-status
-        :hideMoreControls="true"
+        :hide-more-controls="true"
         @reset="() => {
           selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
@@ -255,7 +318,7 @@
       <div id="change-flags">
       <!--
         <icon-button
-          md-icon="mdi-information-outline"
+          icon="mdi-information-outline"
           @activate="() => inIntro = true"
           :color="accentColor"
           :focus-color="accentColor"
@@ -263,11 +326,11 @@
           tooltip-location="bottom"
           tooltip-offset="5px"
           :show-tooltip="!mobile"
-          mdSize="1.2em"
+          size="1.2em"
         >
         </icon-button>
         <icon-button
-          md-icon="mdi-lock"
+          icon="mdi-lock"
           @activate="() => showPrivacyDialog = true"
           :color="accentColor"
           :focus-color="accentColor"
@@ -275,7 +338,7 @@
           tooltip-location="bottom"
           tooltip-offset="5px"
           :show-tooltip="!mobile"
-          mdSize="1.2em"
+          size="1.2em"
         >
         </icon-button>
       -->
@@ -551,6 +614,7 @@
                         <h4><a href="https://www.cosmicds.cfa.harvard.edu/" target="_blank" rel="noopener noreferrer">CosmicDS</a> Vue Data Stories Team:</h4>
                         Pat Udomprasert<br>
                         Jon Carifio<br>
+                        Azmé Tariq<br>
                         Harry Houghton<br>
                         John Lewis<br>
                         Alyssa Goodman<br>
@@ -611,6 +675,7 @@ import { resetNSEWText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverla
 import { useSun } from "./composables/useSun";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
 import { formatInTimeZone } from "date-fns-tz";
+import { sunPlace } from "./horizon_sky";
 
 
 type SheetType = "text" | "video";
@@ -650,9 +715,12 @@ const showLocationSelector = ref(false);
 
 const showHorizon = ref(true);
 
-const startAzOffset = 40 * D2R;
-const endAzOffset = -startAzOffset;
-let azOffsetSlope = 0;
+const startAzOffset = ref(40 * D2R);
+const endAzOffset = ref(-startAzOffset.value);
+const azOffsetSlope = computed(() => (endAzOffset.value - startAzOffset.value) / (endTime.value - startTime.value));
+
+
+const sunDistance = ref(sunPlace.get_distance());
 
 // Get the next 4 "dates of interest"
 // i.e. equinoxes and solstices
@@ -711,29 +779,62 @@ const highAltCoordinates = computed(() => {
 
 const sortedDatesOfInterest = computed(() => {
   const entries: ([EventOfInterest, AstroTime])[] = Object.entries(datesOfInterest) as [EventOfInterest, AstroTime][];
-  return entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+  const sortedEntries = entries.sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+  
+  // Add "today" as the first entry
+  const today: [EventOfInterest, AstroTime] = ["today", { date: new Date() } as AstroTime];
+  return [today, ...sortedEntries];
 });
 
 const EVENTS_OF_INTEREST = [
+  "today",
   "mar_equinox",
   "jun_solstice",
   "sep_equinox",
   "dec_solstice",
+  "custom",
 ] as const;
 type EventOfInterest = typeof EVENTS_OF_INTEREST[number];
 
 const selectedEvent = ref<EventOfInterest | null>(null);
+// const selectedDateType = ref<DateSelection | null>(null);
+const selectedCustomDate = ref<Date | null>(null);
+const showDatePicker = ref(false);
+
+const getDateForEvent = (event: EventOfInterest): Date => {
+  if (event === "today") {
+    return new Date();
+  } else if (event === "custom" && selectedCustomDate.value) {
+    return selectedCustomDate.value;
+  } else {
+    return datesOfInterest[event].date;
+  }
+};
+
+
+const handleDateSelection = (date: Date | null) => {
+  if (date) {
+    showDatePicker.value = false;
+    selectedCustomDate.value = date;
+    selectedEvent.value = 'custom';
+  }
+};
 
 function eventName(event: EventOfInterest): string {
+  const isSmall = smallSize.value;
   switch (event) {
+  case "today":
+    return "Today";
   case "mar_equinox":
-    return "Equinox";
+    return isSmall ? "Mar Equinox" : "March Equinox";
   case "jun_solstice":
-    return "Solstice";
+    return isSmall ? "Jun Solstice" : "June Solstice";
   case "sep_equinox":
-    return "Equinox";
+    return isSmall ? "Sep Equinox" : "September Equinox";
   case "dec_solstice":
-    return "Solstice";
+    return isSmall ? "Dec Solstice" : "December Solstice";
+  case "custom":
+    return "Custom";
   }
 }
 
@@ -765,11 +866,51 @@ function getCurrentSeason(event: string, latitude: number): 'spring' | 'summer' 
   return "spring"; // fallback
 }
 
+function getCurrentSeasonForDate(date: Date, latitude: number): 'spring' | 'summer' | 'autumn' | 'winter' {
+  const year = date.getFullYear();
+  const seasonsForYear = Seasons(year);
+  
+  // Get the season dates for the year
+  const marEquinox = seasonsForYear.mar_equinox.date;
+  const junSolstice = seasonsForYear.jun_solstice.date;
+  const sepEquinox = seasonsForYear.sep_equinox.date;
+  const decSolstice = seasonsForYear.dec_solstice.date;
+  
+  // Determine which season the date falls into
+  let season: 'spring' | 'summer' | 'autumn' | 'winter';
+  
+  const getDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  
+  if (getDate(date) >= getDate(marEquinox) && getDate(date) < getDate(junSolstice)) {
+    season = 'spring';
+  } else if (getDate(date) >= getDate(junSolstice) && getDate(date) < getDate(sepEquinox)) {
+    season = 'summer';
+  } else if (getDate(date) >= getDate(sepEquinox) && getDate(date) < getDate(decSolstice)) {
+    season = 'autumn';
+  } else {
+    // Either before March equinox or after December solstice (winter)
+    season = 'winter';
+  }
+  
+  // Adjust for hemisphere
+  if (latitude < 0) {
+    // Southern hemisphere - seasons are opposite
+    switch (season) {
+    case 'spring': return 'autumn';
+    case 'summer': return 'winter';
+    case 'autumn': return 'spring';
+    case 'winter': return 'summer';
+    }
+  }
+  
+  return season;
+}
+
 const seasonalColors = {
   spring: '#FFA0D7',  
   summer: '#F7EB67',  
   autumn: '#FEB770',  
-  winter: '#91C2F9'   
+  winter: '#c1e2fc'   
 };
 
 const accentColor = computed(() => {
@@ -778,8 +919,32 @@ const accentColor = computed(() => {
     return seasonalColors.spring;
   }
   const latitude = selectedLocation.value.latitudeDeg;
+  // Handle "today" case
+  if (event === 'today') {
+    const today = new Date();
+    const currentSeason = getCurrentSeasonForDate(today, latitude);
+    return seasonalColors[currentSeason];
+  }
+  
+  // Handle custom date case
+  if (event === 'custom' && selectedCustomDate.value) {
+    const customSeason = getCurrentSeasonForDate(selectedCustomDate.value, latitude);
+    return seasonalColors[customSeason];
+  }
+  
   const currentSeason = getCurrentSeason(event, latitude);
   return seasonalColors[currentSeason];
+});
+
+const displayedDate = computed(() => {
+  if (selectedEvent.value === 'today') {
+    return new Date();
+  } else if (selectedEvent.value === 'custom' && selectedCustomDate.value) {
+    return selectedCustomDate.value;
+  } else if (selectedEvent.value) {
+    return datesOfInterest[selectedEvent.value].date;
+  }
+  return new Date(); // fallback
 });
 
 function dayString(date: Date) {
@@ -790,8 +955,7 @@ function dayString(date: Date) {
   });
 }
 
-function getStartAndEndTimes(event: EventOfInterest): [Date, Date] {
-  const day = datesOfInterest[event].date;
+function getStartAndEndTimes(day: Date): [Date, Date] {
   const time = day.getTime();
   const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
 
@@ -815,12 +979,11 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   if (selectedEvent.value === null) {
     return;
   }
-  const [start, end] = getStartAndEndTimes(selectedEvent.value);
+  const [start, end] = getStartAndEndTimes(getDateForEvent(selectedEvent.value));
   startTime.value = start.getTime();
   endTime.value = end.getTime();
 
   const oldOffset = getTimezoneOffset(tzlookup(oldLocation.latitudeDeg, oldLocation.longitudeDeg));
-  azOffsetSlope = (endAzOffset - startAzOffset) / (endTime.value - startTime.value);
 
   const diff = oldOffset - selectedTimezoneOffset.value;
   let newSelectedTime = currentTime.value.getTime() + diff;
@@ -843,12 +1006,13 @@ function handlePlaying( _playing ) {
 }
 
 function goToEvent(event: EventOfInterest) {
-  const day = datesOfInterest[event].date;
+  const day = getDateForEvent(event);
   const time = day.getTime();
 
-  const [start, end] = getStartAndEndTimes(event);
-  azOffsetSlope = (endAzOffset - startAzOffset) / (end.getTime() - start.getTime());
-
+  const [start, end] = getStartAndEndTimes(day);
+  if (event !== 'custom') {
+    selectedCustomDate.value = day;
+  }
   store.setTime(new Date(time));
   const timeStart = start.getTime();
   store.setTime(new Date(timeStart));
@@ -884,6 +1048,7 @@ let userSelectedMapLocations: [number, number][] = [];
 let userSelectedSearchLocations: [number, number][] = [];
 
 function updateLocationFromMap(location: LocationDeg) {
+  console.log("Updating location from map:", location);
   selectedLocation.value = location;
   userSelectedMapLocations.push([location.latitudeDeg, location.longitudeDeg]);
 }
@@ -907,8 +1072,13 @@ interface LocationInfo {
 }
 
 async function getLocationInfo(longitudeDeg: number, latitudeDeg: number): Promise<LocationInfo> {
+  let location: string = "";
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  const location = await textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
+  try {
+    location = await textForLocation(longitudeDeg, latitudeDeg, geocodingOptions);
+  } catch (err) {
+    console.error("Error getting location text:", err);
+  }
   const locationName = !startsWithNumber(location) ? `${location}` : "";
   const formattedLat = latText(latitudeDeg);
   const formattedLon = lonText(longitudeDeg);
@@ -993,6 +1163,31 @@ const selectedLocaledTimeDateString = computed(() => {
 
 const MAX_ZOOM = 500;
 
+function aspectRatioSetup() {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error WWTControl does have a canvas element (that's not TS-exposed)
+  const canvas = WWTControl.singleton.canvas as HTMLCanvasElement;
+
+  function updateAzOffsets() {
+    const aspectRatio = canvas.width / canvas.height;
+    startAzOffset.value = 0.35 * (60 * aspectRatio + 13.5) * D2R;
+    endAzOffset.value = -startAzOffset.value;
+  }
+
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.target === canvas) {
+        updateAzOffsets();
+        resetView();
+        return;
+      }
+    }
+  });
+
+  observer.observe(canvas);
+  updateAzOffsets();
+}
+
 onMounted(() => {
   updateSelectedLocationInfo();
   store.waitForReady().then(async () => {
@@ -1000,6 +1195,8 @@ onMounted(() => {
     skyBackgroundImagesets.forEach(iset => backgroundImagesets.push(iset));
 
     updateWWTLocation(selectedLocation.value);
+    
+    aspectRatioSetup();
 
     store.setClockSync(false);
     store.setClockRate(0);
@@ -1129,7 +1326,7 @@ function resetView(zoomDeg?: number, withAzOffset=true) {
   const alt = altDeg * D2R;
 
   if (t > 0 && withAzOffset) {
-    const offset = (azOffsetSlope * (t - startTime.value) + startAzOffset);
+    const offset = (azOffsetSlope.value * (t - startTime.value) + startAzOffset.value);
     const sgn = peakNorth ? -1 : 1;
     az += (offset * sgn);
   }
@@ -1220,6 +1417,7 @@ watch(currentTime, (_time: Date) => {
   if (forceCamera.value) {
     resetView(store.zoomDeg);
   }
+  sunDistance.value = sunPlace.get_distance();
 });
 
 watch(forceCamera, (value: boolean) => {
@@ -1231,6 +1429,12 @@ watch(forceCamera, (value: boolean) => {
 watch(selectedEvent, (event: EventOfInterest | null) => {
   if (event) {
     goToEvent(event);
+  }
+});
+
+watch(selectedCustomDate, (date: Date | null) => {
+  if (date && selectedEvent.value === "custom") {
+    goToEvent("custom");
   }
 });
 
@@ -1357,22 +1561,13 @@ body {
 #left-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
   align-items: flex-start;
 }
 
 #left-buttons .icon-wrapper {
   width: 30%;
   flex-shrink: 0;
-}
-
-#center-buttons {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
 }
 
 #right-buttons {
@@ -1560,7 +1755,7 @@ video {
   pointer-events: auto;
 }
 
-.event-button, .options {
+.event-button {
   font-size: 0.9rem;
   background: black;
   border: 1px solid;
@@ -1576,12 +1771,14 @@ video {
   &.selected {
     color: var(--accent-color);
     border-color: var(--accent-color);
+    box-shadow: none !important;
   }
 }
 
 .options {
   color: var(--accent-color);
-  border-color: var(--accent-color);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  pointer-events: auto;
 }
 
 .event-title {
@@ -1592,6 +1789,46 @@ video {
   color: var(--accent-color);
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
+
+#date-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  align-items: flex-end;
+
+  .displayed-date-info {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--accent-color);
+    border-radius: 5px;
+    padding: 0.5rem;
+    text-align: right;
+    pointer-events: auto;
+
+    .date-display {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .event-display {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+  }
+}
+
+.date-picker-section {
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: auto;
+  width: 100%;
+
+  .calendar-button {
+    font-size: 0.7rem;
+    text-transform: none;
+  }
+}
+
 
 .map-container {
   @media (max-width: 600px) {
@@ -1673,7 +1910,8 @@ video {
 
     .v-slider-thumb__label {
       color: white;
-      background-color: black;
+      background-color: rgba(0, 0, 0, 0.6);
+      font-weight: 600;
       border: 2px solid var(--accent-color);
       border-radius: 5px;
       width: max-content;
@@ -1791,4 +2029,32 @@ video {
     }
   }  
 }
+
+svg.fa-xmark {
+  padding: 0.5em;
+  margin: -0.5em;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+}
+
+#geolocation-close >  svg.fa-xmark:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+  overflow: visible;
+  z-index: 9000;
+}
+
+#date-info {
+  /* most of the styling comes from .event-button */
+  border: 1px solid var(--accent-color);
+  text-align: right;
+  user-select: none; /* Standard */
+  margin-bottom: 10px;
+  pointer-events: auto;
+}
+
+.display-date-button {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 </style>
