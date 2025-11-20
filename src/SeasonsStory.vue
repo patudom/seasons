@@ -2315,7 +2315,7 @@ video {
   right: 0.5em;
   bottom: 0.1em;
 
-  img {
+  #icons-container img {
     height: 32px;
   }
 
