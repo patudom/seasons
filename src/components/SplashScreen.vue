@@ -23,7 +23,7 @@
         <p>The Sun's Seasonal Journey</p>
       </div>
       <div id="invitation">
-        See how the Sun's path changes on the solstices and equinoxes from any location on Earth!
+        See how the Sun's path changes on the solstices and equinoxes (or any other date) from any location on Earth!
       </div>
 
       <div id="location-input-section">

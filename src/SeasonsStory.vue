@@ -440,7 +440,7 @@
               <v-card-text class="info-text no-bottom-border-radius">
                 <v-container>
                   <p>
-                    This interactive lets you view the path of the Sun in the sky on the solstices and equinoxes from any location on Earth! 
+                    This interactive lets you view the path of the Sun in the sky on any date from any location on Earth! 
                   </p>
                   <ul class="ml-5 pt-3">
                     <li class="pb-3">
@@ -488,7 +488,7 @@
                     </li>
                     <li>
                       <font-awesome-icon
-                        icon="rotate"
+                        icon="house"
                         :color="accentColor"
                       /> to reset the time and view to sunrise for the day.
                     </li>
@@ -637,7 +637,6 @@
                         John Lewis<br>
                         Alyssa Goodman<br>
                         Mary Dussault<br>
-                        Harry Houghton<br>
                         Evaluator: Sue Sunbury<br>
                         <h4 class="pt-4">WorldWide Telescope Team:</h4>
                         Peter Williams<br>
