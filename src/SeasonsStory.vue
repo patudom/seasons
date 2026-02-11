@@ -44,7 +44,7 @@
 
             <button 
               @click="showLocationSelector = !showLocationSelector"
-              class="icon-location-button"
+              class="icon-location-button clickable-object"
             >
               <font-awesome-layers>
                 <font-awesome-icon
@@ -67,15 +67,15 @@
               tooltip-text="Select Location"
               tooltip-location="start"
             ></icon-button> -->
-            <h4>View from</h4>
+            <h4 @click="showLocationSelector = !showLocationSelector" class="clickable-object">View from</h4>
           </div>
           <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
           <button
             id="location-button"
-            class="event-button selected"
+            class="event-button info-button"
             @click="showLocationSelector = true"
           > 
-          <div>{{ selectedLocationInfo.name }}</div>
+          <div v-if="selectedLocationInfo.name" class="mb-1"><strong>{{ selectedLocationInfo.name }}</strong></div>
           <div>Lat: {{ selectedLocationInfo.latitude }}</div>
           <div>Long: {{ selectedLocationInfo.longitude }}</div>
           </button>
@@ -133,6 +133,17 @@
             hide-details
           />
         </div>
+        <!-- go to sun -->
+        <icon-button
+          v-if="false"
+          @activate="goToSun"
+          icon="fa-sun"
+          :color="accentColor"
+          :tooltip-text="'Go to Sun'"
+          tooltip-location="start"
+          size="sm"
+        >
+      </icon-button>
         <icon-button
           v-model="showTextSheet"
           icon="fa-info"
@@ -150,25 +161,25 @@
         >
         <button 
             @click="showDatePicker = !showDatePicker"
-            class="display-date-button mr-2"
+            class="display-date-button mr-2 clickable-object"
           >
             <font-awesome-layers>
               <font-awesome-icon
-                icon="calendar-week"
+                icon="calendar-day"
                 color="black"
               />
               <font-awesome-icon
-                icon="calendar-week"
+                icon="calendar-day"
                 :color="accentColor"
                 transform="shrink-3"
               />
             </font-awesome-layers>
           </button>
-          <h4>Displayed Date</h4>
+          <h4 @click="showDatePicker = !showDatePicker" class="clickable-object">Displayed Date</h4>
           </div>
-          <button id="date-info" @click="showDatePicker = !showDatePicker" class="event-button">
-            <div>{{ dayString(displayedDate) }}</div>
-            <div>Length of Day: {{ ((endTime - startTime) / 3600000).toFixed(1) }} hr</div>
+          <button id="date-info" @click="showDatePicker = !showDatePicker" class="event-button info-button">
+            <div class="mb-1"><strong>{{ dayString(displayedDate) }}</strong></div>       
+            <div>Length of Day: {{ formatDayLength(endTime - startTime, currentDayInfo[2]) }}</div>
             <div>Distance to Sun: {{ sunDistance.toFixed(2) }} au</div>
           </button>
         
@@ -193,7 +204,9 @@
               size="small"
               class="calendar-button event-button"
             >
-              <v-icon left>mdi-calendar</v-icon>
+              <font-awesome-icon
+                icon="calendar-day"
+              />
               Choose Any Date
             </button>
             
@@ -205,7 +218,7 @@
                 <v-card-title class="text-h6 mb-0 mt-2">
                   Select Date
                 </v-card-title>
-                <v-card-text class="my-0 mx=2 pa-0">
+                <v-card-text class="my-0 mx-2 pa-0">
                   <v-date-picker
                     :model-value="selectedCustomDate"
                     @update:model-value="handleDateSelection"
@@ -246,6 +259,7 @@
           :max="sliderMax"
           thumb-label="always"
           class="time-slider"
+          @end="onTimeSliderEnd"
         >
           <template v-slot:thumb-label>
             <div class="thumb-label">
@@ -256,16 +270,24 @@
 
         <div class="time-chips">
           <v-chip
-            @click="sliderValue = sliderMin"
+            @click="() => {
+              sliderValue = sliderMin;
+              resetView(MAX_ZOOM);
+              events.push('sunrise');
+            }"
             :color="accentColor"
             variant="elevated"
             size="x-small"
             class="time-chip"
           >
-            Sunrise
+            {{ (currentDayInfo[2].sunAlwaysDown || currentDayInfo[2].sunAlwaysUp) ?  'Midnight' : 'Sunrise' }}
           </v-chip>
           <v-chip
-            @click="sliderValue = (sliderMin + sliderMax) / 2"
+            @click="() => {
+              sliderValue = (sliderMin + sliderMax) / 2;
+              resetView(MAX_ZOOM);
+              events.push('midday');
+            }"
             :color="accentColor"
             variant="elevated"
             size="x-small"
@@ -276,13 +298,15 @@
           <v-chip
             @click="() => {
               sliderValue = sliderMax;
+              resetView(MAX_ZOOM);
+              events.push('sunset');
             }"
             :color="accentColor"
             variant="elevated"
             size="x-small"
             class="time-chip"
           >
-            Sunset
+            {{ (currentDayInfo[2].sunAlwaysDown || currentDayInfo[2].sunAlwaysUp) ?  'Midnight' : 'Sunset' }}
           </v-chip>
         </div>
       </div>
@@ -300,49 +324,52 @@
         @reset="() => {
           selectedEvent && goToEvent(selectedEvent);
           wwtStats.timeResetCount += 1;
+          events.push('wwt_time_reset');
         }"
         @update:reverse="(_reverse: boolean) => {
           wwtStats.reverseCount += 1;
+          events.push('wwt_reverse');
         }"
         @update:model-value="handlePlaying"
         @slow-down="(rate: number) => {
           wwtStats.slowdowns.push(rate);
+          events.push(`wwt_slowdown ${rate}`);
         }"
         @speed-up="(rate: number) => {
           wwtStats.speedups.push(rate);
+          events.push(`wwt_speedup ${rate}`);
         }"
         @set-rate="(rate: number) => {
           wwtStats.rateSelections.push(rate);
+          events.push(`wwt_rate ${rate}`);
         }"
         />
-      <div id="change-flags">
-      <!--
-        <icon-button
-          icon="mdi-information-outline"
-          @activate="() => inIntro = true"
-          :color="accentColor"
-          :focus-color="accentColor"
-          tooltip-text="Show Quick Start Guide"
-          tooltip-location="bottom"
-          tooltip-offset="5px"
-          :show-tooltip="!mobile"
-          size="1.2em"
-        >
-        </icon-button>
-        <icon-button
-          icon="mdi-lock"
-          @activate="() => showPrivacyDialog = true"
-          :color="accentColor"
-          :focus-color="accentColor"
-          tooltip-text="Change privacy settings"
-          tooltip-location="bottom"
-          tooltip-offset="5px"
-          :show-tooltip="!mobile"
-          size="1.2em"
-        >
-        </icon-button>
-      -->
-      </div>
+    </div>
+    <div id="change-flags">
+      <icon-button
+        icon="mdi-comment-quote"
+        @activate="showQuestion = true"
+        :color="accentColor"
+        :focus-color="accentColor"
+        tooltip-text="Share your thoughts"
+        tooltip-location="bottom"
+        tooltip-offset="5px"
+        :show-tooltip="!mobile"
+        size="1.2em"
+      >
+      </icon-button>
+      <icon-button
+        icon="mdi-lock"
+        @activate="() => showPrivacyDialog = true"
+        :color="accentColor"
+        :focus-color="accentColor"
+        tooltip-text="Change privacy settings"
+        tooltip-location="bottom"
+        tooltip-offset="5px"
+        :show-tooltip="!mobile"
+        size="1.2em"
+      >
+      </icon-button>
     </div>
     <div id="body-logos" v-if="!smallSize">
       <credit-logos
@@ -547,7 +574,7 @@
                     The Reason for Seasons
                   </h3>
                   <p>
-                    Earth's axis has a 23.5 degree tilt, which causes the seasons we experience.
+                    Earth's axis has a 23.4 degree tilt, which causes the seasons we experience.
                   </p>
                   <p>
                     The key factors are how high in the sky the Sun gets, and how long it stays in the sky on a particular day. The higher the Sun and the longer it is in the sky, the more energy we receive.
@@ -642,6 +669,65 @@
       </v-card>
     </v-dialog>
 
+    <!-- Data collection opt-out dialog -->
+    <v-dialog
+      scrim="false"
+      v-model="showPrivacyDialog"
+      max-width="400px"
+      id="privacy-popup-dialog"
+    >
+      <v-card>
+        <v-card-text>
+          To evaluate usage of this app, <strong>anonymized</strong> data may be collected, including user feedback and locations searched or selected on map. Places selected via geolocation services on your device are NOT collected.
+        </v-card-text>
+        <v-card-actions class="pt-3">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="#BDBDBD"
+            href="https://www.cfa.harvard.edu/privacy-statement"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+          Privacy Policy
+          </v-btn>
+          <v-btn
+            color="#ff6666"
+            @click="() => {
+              responseOptOut = true;
+              showPrivacyDialog = false;
+            }"
+          >
+          Opt out
+          </v-btn>
+          <v-btn 
+            color="green"
+            @click="() => {
+              responseOptOut = false;
+              showPrivacyDialog = false;
+            }"
+          >
+            Allow
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-expand-transition>
+      <question-dialog
+        v-show="showQuestion"
+        @dismiss="() => showQuestion = false"
+        @opt-out="() => {
+          showQuestion = false;
+          ahaOptOut = true;
+        }"
+        @finish="(response: string) => {
+          ahaMomentResponses.push(response);
+          showQuestion = false;
+        }"
+      >
+      </question-dialog>
+    </v-expand-transition>
+
   </div>
 </v-app>
 </template>
@@ -652,6 +738,7 @@ import { useDisplay } from "vuetify";
 import { storeToRefs } from "pinia";
 import { getTimezoneOffset } from "date-fns-tz";
 import tzlookup from "tz-lookup";
+import { v4 } from "uuid";
 
 import { AstroTime, Seasons } from "astronomy-engine";
 
@@ -666,6 +753,7 @@ import {
   useWWTKeyboardControls,
   D2R,
   R2D,
+  API_BASE_URL,
 } from "@cosmicds/vue-toolkit";
 import { MapBoxFeature, MapBoxFeatureCollection, geocodingInfoForSearch, textForLocation } from "@cosmicds/vue-toolkit/src/mapbox";
 
@@ -673,7 +761,6 @@ import { useTimezone } from "./timezones";
 import { horizontalToEquatorial } from "./utils";
 import { resetNSEWText, drawPlanets, renderOneFrame, drawEcliptic, drawSkyOverlays } from "./wwt-hacks";
 import { useSun } from "./composables/useSun";
-import { SolarSystemObjects } from "@wwtelescope/engine-types";
 import { formatInTimeZone } from "date-fns-tz";
 import { sunPlace } from "./horizon_sky";
 
@@ -707,6 +794,8 @@ const sheet = ref<SheetType | null>(null);
 const layersLoaded = ref(false);
 const positionSet = ref(false);
 const forceCamera = ref(true);
+const showQuestion = ref(false);
+let questionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const tab = ref(0);
 
@@ -719,7 +808,6 @@ const startAzOffset = ref(40 * D2R);
 const endAzOffset = ref(-startAzOffset.value);
 const azOffsetSlope = computed(() => (endAzOffset.value - startAzOffset.value) / (endTime.value - startTime.value));
 
-
 const sunDistance = ref(sunPlace.get_distance());
 
 // Get the next 4 "dates of interest"
@@ -731,14 +819,13 @@ const datesOfInterest = Seasons(currentYear);
 // Find dates that have passed and sort them by date
 const pastEvents = Object.entries(datesOfInterest)
   .filter(([_key, value]: [string, AstroTime]) => value.date < currentDate)
-  .sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
+  .map(entry => entry[0]);
 
 // If we have more than 1 past event, replace the older ones with next year's events
 // Keep only the most recent past event as our starting point
-if (pastEvents.length > 1) {
+if (pastEvents.length > 0) {
   const nextSeasonsInfo = Seasons(currentYear + 1);
-  const eventsToReplace = pastEvents.slice(0, -1); // All except the most recent past event
-  eventsToReplace.forEach(([key]) => {
+  pastEvents.forEach(key => {
     datesOfInterest[key] = nextSeasonsInfo[key];
   });
 }
@@ -947,6 +1034,11 @@ const displayedDate = computed(() => {
   return new Date(); // fallback
 });
 
+const currentDayInfo = computed(() => {
+  const day = getDateForEvent(selectedEvent.value || 'today');
+  return getStartAndEndTimes(day);
+});
+
 function dayString(date: Date) {
   return date.toLocaleString("en-US", {
     year: "numeric",
@@ -955,31 +1047,71 @@ function dayString(date: Date) {
   });
 }
 
-function getStartAndEndTimes(day: Date): [Date, Date] {
+function formatDayLength(milliseconds: number, polarInfo: { sunAlwaysUp: boolean; sunAlwaysDown: boolean }): string {
+  if (polarInfo.sunAlwaysDown) {
+    return "0h 0m";
+  }
+  
+  if (polarInfo.sunAlwaysUp) {
+    return "24h 0m";
+  }
+  
+  // Normal calculation for days with sunrise/sunset
+  const totalMinutes = Math.round(milliseconds / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
+}
+
+function goToSun() {
+  const sunPos = getSunPositionAtTime(currentTime.value);
+  const radec = horizontalToEquatorial(
+    sunPos.altRad, 
+    sunPos.azRad, 
+    selectedLocation.value.latitudeDeg * D2R,
+    selectedLocation.value.longitudeDeg * D2R,  
+    currentTime.value
+  );
+  store.gotoRADecZoom({
+    ...radec,
+    zoomDeg: Math.min(store.zoomDeg, 180),
+    instant: false,
+  });
+}
+function getStartAndEndTimes(day: Date): [Date, Date, { sunAlwaysUp: boolean; sunAlwaysDown: boolean }] {
   const time = day.getTime();
-  const { rising: dayStart, setting: dayEnd } = getTimeforSunAlt(0, time);
+  const { rising: dayStart, setting: dayEnd, always } = getTimeforSunAlt(0, time);
 
   let start: Date;
   let end: Date;
+  const sunAlwaysUp = always === 'up';
+  const sunAlwaysDown = always === 'down';
+
   if (dayStart === null || dayEnd === null) {
-    start = new Date(time); 
-    start.setHours(0, 0, 0, 0);
-    start = new Date(start.getTime() - selectedTimezoneOffset.value);
-    end = new Date(start.getTime() + 86400000 - 60);
+    console.log("Polar day or night detected");
+    // moved checking for polar day/night to useSun
+    
+    // It don't know if it really make sense to have the slider go 
+    // from 00:00 to 23:59 when for both polar night and noon
+    //  But I think that is the only choice we have
+    // utcMidnight = time - (time % (24 * 60 * 60 * 1000))
+    // localMidnight = utcMidnight - timezone offset
+    const localMidnight = time - (time % (24 * 60 * 60 * 1000)) - selectedTimezoneOffset.value;
+    start = new Date(localMidnight);
+    end = new Date(localMidnight + 86400000 - 60);
   } else {
     start = new Date(dayStart);
     end = new Date(dayEnd);
   }
 
-
-  return [start, end];
+  return [start, end, { sunAlwaysUp, sunAlwaysDown }];
 }
 
 function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg) {
   if (selectedEvent.value === null) {
     return;
   }
-  const [start, end] = getStartAndEndTimes(getDateForEvent(selectedEvent.value));
+  const [start, end, _polarInfo] = getStartAndEndTimes(getDateForEvent(selectedEvent.value));
   startTime.value = start.getTime();
   endTime.value = end.getTime();
 
@@ -994,22 +1126,26 @@ function updateSliderBounds(_newLocation: LocationDeg, oldLocation: LocationDeg)
   store.setTime(new Date(newSelectedTime));
 }
 
-function handlePlaying( _playing ) {
+function handlePlaying(play: boolean) {
+  if(forceCamera.value) {
+    resetView(MAX_ZOOM);
+  }
   // Auto-pause when time reaches sunset or sunrise, accounting for playing direction
   if (playing.value && ((currentTime.value.getTime() >= endTime.value && store.clockRate >= 0) || ( currentTime.value.getTime() <= startTime.value && store.clockRate <= 0))) {
     playing.value = false;
     return;
   }  
 
-  playing.value = _playing;
+  playing.value = play;
   wwtStats.playPauseCount += 1;
+  events.push(play ? 'wwt_play' : 'wwt_pause');
 }
 
 function goToEvent(event: EventOfInterest) {
   const day = getDateForEvent(event);
   const time = day.getTime();
 
-  const [start, end] = getStartAndEndTimes(day);
+  const [start, end, _polarInfo] = getStartAndEndTimes(day);
   if (event !== 'custom') {
     selectedCustomDate.value = day;
   }
@@ -1033,10 +1169,33 @@ const wwtStats = markRaw({
   startTime: Date.now(),
 });
 
+// get lat and lon url query parameters for initial location
+const urlParams = new URLSearchParams(window.location.search);
+const urlLat = urlParams.get("lat");
+const urlLon = urlParams.get("lon");
+let initialLat: number = 42.3581;
+let initialLon: number = -71.1056;
+if (urlLat && urlLon) {
+  initialLat = parseFloat(urlLat);
+  initialLon = parseFloat(urlLon);
+}
 const selectedLocation = ref<LocationDeg>({
-  longitudeDeg: -71.1056,
-  latitudeDeg: 42.3581,
+  longitudeDeg: initialLon,
+  latitudeDeg: initialLat,
+  // latitudeDeg: 72.40 // test polar latitude
 });
+
+function createQueryUrl(): string {
+  const lat = `${selectedLocation.value.latitudeDeg}`;
+  const lon = `${selectedLocation.value.longitudeDeg}`;
+  const params = new URLSearchParams(window.location.search);
+  params.set("lat", lat);
+  params.set("lon", lon);
+  return `${window.location.origin}/?${params.toString()}`;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).createQueryUrl = createQueryUrl;
+
 const selectedLocationInfo = ref<LocationInfo>({ name: "", latitude: "", longitude: "" });
 const searchErrorMessage = ref<string | null>(null);
 const geocodingOptions = {
@@ -1044,13 +1203,11 @@ const geocodingOptions = {
   access_token: process.env.VUE_APP_MAPBOX_ACCESS_TOKEN ?? "", 
 };
 
-let userSelectedMapLocations: [number, number][] = [];
-let userSelectedSearchLocations: [number, number][] = [];
-
 function updateLocationFromMap(location: LocationDeg) {
   console.log("Updating location from map:", location);
   selectedLocation.value = location;
-  userSelectedMapLocations.push([location.latitudeDeg, location.longitudeDeg]);
+  userSelectedLocations.push([location.latitudeDeg, location.longitudeDeg]);
+  events.push(`location_update ${location.latitudeDeg} ${location.longitudeDeg}`);
 }
 
 function latText(latitudeDeg: number): string {
@@ -1101,11 +1258,12 @@ function setLocationFromFeature(feature: MapBoxFeature) {
   }).catch(_err => {
     searchErrorMessage.value = "An error occurred while searching";
   });
+  userSelectedLocations.push(feature.center);
+  events.push(`location_update ${feature.center[0]} ${feature.center[1]}`);
 }
 
 function setLocationFromSearchFeature(feature: MapBoxFeature) {
   setLocationFromFeature(feature);
-  userSelectedSearchLocations.push(feature.center);
 }
 
 async function updateSelectedLocationInfo() {
@@ -1115,12 +1273,6 @@ async function updateSelectedLocationInfo() {
 
 function searchProvider(text: string): Promise<MapBoxFeatureCollection> {
   return geocodingInfoForSearch(text, geocodingOptions);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function resetData() {
-  userSelectedMapLocations = [];
-  userSelectedSearchLocations = [];
 }
 
 const selectedTime = ref(Date.now());
@@ -1215,7 +1367,11 @@ onMounted(() => {
     // If there are layers to set up, do that here!
     positionSet.value = true;
     layersLoaded.value = true;
+
+    questionDisplaySetup();
   });
+
+  createUserEntry();
 });
 
 const ready = computed(() => layersLoaded.value && positionSet.value);
@@ -1227,7 +1383,7 @@ const inNorthernHemisphere = computed(() => selectedLocation.value.latitudeDeg >
 
 /* Properties related to device/screen characteristics */
 const smallSize = computed(() => smAndDown.value);
-// const mobile = computed(() => smallSize.value && touchscreen);
+const mobile = computed(() => smallSize.value && touchscreen);
 
 /* This lets us inject component data into element CSS */
 const cssVars = computed(() => {
@@ -1378,23 +1534,12 @@ function doWWTModifications() {
   WWTControl.singleton.renderOneFrame = newFrameRender;
 
   const originalUpdatePlanetLocations = Planets.updatePlanetLocations;
-  const planetScales = [
-    4,  // Sun
-    1.25,  // Mercury
-    1.25,  // Venus
-    1.25,  // Mars
-    2.5,  // Jupiter
-    4.5,  // Saturn
-    2,  // Uranus
-    2,  // Neptune
-    1,  // Pluto
-    1.25,  // Moon
-  ];
   function newUpdatePlanetLocations(threeD: boolean) {
     originalUpdatePlanetLocations(threeD);
-    for (let i = 0; i <= SolarSystemObjects.moon; i++) {
-      Planets._planetScales[i] = planetScales[i];
-    }
+    // Only scale the Sun (index 0)
+    // Use smaller scale (1) during polar night, normal scale (4) otherwise
+    const polarInfo = currentDayInfo.value[2];
+    Planets._planetScales[0] = Planets._planetScales[0] * (polarInfo.sunAlwaysDown ? 1 : 4);
   }
   Planets.updatePlanetLocations = newUpdatePlanetLocations;
   Planets.drawPlanets = drawPlanets;
@@ -1427,18 +1572,214 @@ watch(forceCamera, (value: boolean) => {
 });
 
 watch(selectedEvent, (event: EventOfInterest | null) => {
-  if (event) {
-    goToEvent(event);
+  if (!event) {
+    return;
   }
+
+  goToEvent(event);
+  const representation = event === "custom" ? `event_custom ${selectedCustomDate.value?.toISOString()}` : event as string;
+  userSelectedDates.push(representation);
+  events.push(representation);
 });
 
 watch(selectedCustomDate, (date: Date | null) => {
   if (date && selectedEvent.value === "custom") {
     goToEvent("custom");
+
+    const representation = `event_custom ${selectedCustomDate.value?.toISOString()}`;
+    userSelectedDates.push(representation);
+    events.push(representation);
   }
 });
 
 watch(inNorthernHemisphere, (_inNorth: boolean) => resetNSEWText());
+
+
+const STORY_DATA_URL = `${API_BASE_URL}/seasons/data`;
+const OPT_OUT_KEY = "seasons-optout" as const;
+const AHA_OPT_OUT_KEY = "seasons-aha-optout" as const;
+const UUID_KEY = "seasons-uuid" as const;
+const storedOptOut = window.localStorage.getItem(OPT_OUT_KEY);
+const storedAhaOptOut = window.localStorage.getItem(AHA_OPT_OUT_KEY);
+const maybeUUID = window.localStorage.getItem(UUID_KEY);
+const optOut = typeof storedOptOut === "string" ? storedOptOut === "true" : null;
+const responseOptOut = ref(optOut);
+const ahaOptOut = ref(typeof storedAhaOptOut === "string" ? storedAhaOptOut === "true" : null);
+const showPrivacyDialog = ref(false);
+const existingUser = maybeUUID !== null;
+const uuid = maybeUUID ?? v4();
+if (!existingUser) {
+  window.localStorage.setItem(UUID_KEY, uuid);
+}
+
+let timeSliderUsedCount = 0;
+let events: string[] = [];
+let userSelectedDates: string[] = [];
+let userSelectedLocations: [number, number][] = [];
+let ahaMomentResponses: string[] = [];
+let appStartTimestamp = Date.now();
+
+function onTimeSliderEnd(_value: number) {
+  timeSliderUsedCount += 1;
+  events.push("time_slider_used");
+}
+
+async function questionDisplaySetup() {
+  if (responseOptOut.value || ahaOptOut.value) {
+    return;
+  }
+
+  const existingDataResponse = await fetch(`${STORY_DATA_URL}/${uuid}`, {
+    method: "GET",
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" }
+  });
+
+  const existingDataContent = await existingDataResponse.json();
+  const alreadyAnswered = existingDataResponse.status === 200 && existingDataContent.response.aha_moment_responses.length > 0;
+
+  if (alreadyAnswered) {
+    return;
+  }
+
+  setQuestionTimeout();
+}
+
+function setQuestionTimeout(timeout=4 * 60_000) {
+  questionTimeout = setTimeout(() => {
+    showQuestion.value = true;
+  }, timeout);
+}
+
+async function createUserEntry() {
+  if (responseOptOut.value) {
+    return;
+  }
+
+  const response = await fetch(`${STORY_DATA_URL}/${uuid}`, {
+    method: "GET",
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    headers: { "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "" },
+  });
+  const content = await response.json();
+  const exists = response.status === 200 && content.response?.user_uuid != undefined;
+  if (exists) {
+    return;
+  }
+
+  fetch(`${STORY_DATA_URL}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "",
+    },
+    body: JSON.stringify({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      user_uuid: uuid,
+    }),
+  });
+}
+
+function resetData() {
+  timeSliderUsedCount = 0;
+  events = [];
+  userSelectedDates = [];
+  userSelectedLocations = [];
+  ahaMomentResponses = [];
+  Object.assign(wwtStats, {
+    timeResetCount: 0,
+    reverseCount: 0,
+    playPauseCount: 0,
+    speedups: [],
+    slowdowns: [],
+    rateSelections: [],
+    startTime: selectedTime.value,
+  });
+
+  const now = Date.now();
+  appStartTimestamp = now;
+}
+
+function updateUserData() {
+  if (responseOptOut.value) {
+    return;
+  }
+
+  const now = Date.now();
+  const body = {
+    events,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    time_slider_used_count: timeSliderUsedCount,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    user_selected_dates: userSelectedDates,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    user_selected_locations: userSelectedLocations,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    app_time_ms: now - appStartTimestamp,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_time_reset_count: wwtStats.timeResetCount,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_reverse_count: wwtStats.reverseCount,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_play_pause_count: wwtStats.playPauseCount,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_speedups: wwtStats.speedups,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_slowdowns: wwtStats.slowdowns,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_rate_selections: wwtStats.rateSelections,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    wwt_start_stop_times: [wwtStats.startTime, selectedTime.value],
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    aha_moment_response: ahaMomentResponses,
+  } as Record<string, unknown>;
+  fetch(`${STORY_DATA_URL}/${uuid}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      "Authorization": process.env.VUE_APP_CDS_API_KEY ?? "",
+    },
+    body: JSON.stringify(body),
+    keepalive: true,
+  }).then(() => resetData());
+}
+
+watch(showSplashScreen, (show: boolean) => {
+  if (!show && responseOptOut.value === null) {
+    showPrivacyDialog.value = true; 
+  }
+});
+
+watch(responseOptOut, (optOut: boolean | null) => {
+  if (optOut !== null) {
+    window.localStorage.setItem(OPT_OUT_KEY, String(optOut));
+  }
+});
+
+watch(ahaOptOut, (optOut: boolean | null) => {
+  if (optOut !== null) {
+    window.localStorage.setItem(AHA_OPT_OUT_KEY, String(optOut));
+  }
+});
+
+watch(showQuestion, (show: boolean) => {
+  if (show && questionTimeout) {
+    clearTimeout(questionTimeout);
+  }
+});
+
+window.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    updateUserData();
+  } else {
+    resetData();
+  }
+});
+
+window.onbeforeunload = updateUserData;
+
 
 </script>
 
@@ -1762,17 +2103,25 @@ video {
   border-radius: 5px;
   padding: 0.5rem;
   pointer-events: auto;
-}
-
-.event-button {
   border-color: white;
   width: 100%;
 
   &.selected {
     color: var(--accent-color);
     border-color: var(--accent-color);
+    border-radius: 5px !important;
     box-shadow: none !important;
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--accent-color) 70%, black);
+    }
   }
+
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    border-color: color-mix(in srgb, white 70%, black);
+  }  
 }
 
 .options {
@@ -1843,20 +2192,19 @@ video {
 }
 
 #bottom-content {
-  width: 80%;
+  width: 75%;
   display: flex;
   flex-direction: row;
   position: absolute;
-  bottom: 3rem;
+  bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  // width: calc(100% - 2rem);
   pointer-events: none;
   align-items: center;
+  justify-content: center;
   gap: 30px;
 
   @media (max-width: 959px) {
-    width: 95%;
     gap: 5px;
     bottom: 1rem;
   }
@@ -1870,6 +2218,10 @@ video {
       display: none;
     }
   }  
+
+  @media (max-height: 599px) {
+    bottom: 0.5rem;
+  }
 
   #speed-text {
     font-size: 1rem;
@@ -1894,9 +2246,13 @@ video {
   }
   
   @media (max-width: 699px) {
-    padding-left: 1.5rem;
+    padding-left: 2rem;
     padding-right: 1rem;
     min-width: 50%;
+  }
+
+  @media (max-width: 969px) {
+    width: 70%;
   }
 }
 
@@ -1910,7 +2266,7 @@ video {
 
     .v-slider-thumb__label {
       color: white;
-      background-color: rgba(0, 0, 0, 0.6);
+      background-color: rgba(0, 0, 0, 0.5);
       font-weight: 600;
       border: 2px solid var(--accent-color);
       border-radius: 5px;
@@ -2013,8 +2369,14 @@ video {
   right: 0.5em;
   bottom: 0.1em;
 
-  img {
-    height: 36px;
+  #logo-credits img {
+    height: 32px !important;
+  }
+
+  @media (max-height: 599px) {
+    img {
+      display: none;
+    }
   }
 }
 
@@ -2044,17 +2406,129 @@ svg.fa-xmark {
 }
 
 #date-info {
+  margin-bottom: 10px;
+}
+
+#change-flags {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 4rem;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  pointer-events: none;
+
+  @media (max-width: 959px) {
+    right: 0.5rem;
+    bottom: 0.5rem;
+  }
+
+  @media (max-width: 699px) {
+    display: none;
+  }
+
+  @media (max-height: 599px) {
+    bottom: 0.5rem;
+  }
+    
+  .icon-wrapper {
+    margin: 0;
+    padding: 0.15em;
+    border: none;
+    min-width: 0;
+  }
+}
+
+.info-button {
   /* most of the styling comes from .event-button */
   border: 1px solid var(--accent-color);
   text-align: right;
   user-select: none; /* Standard */
-  margin-bottom: 10px;
   pointer-events: auto;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--accent-color) 70%, black);
+  }  
 }
 
 .display-date-button {
   cursor: pointer;
   pointer-events: auto;
+}
+
+.clickable-object {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.icon-wrapper, .options {
+  &:hover {
+    opacity: 0.7;
+  }  
+}
+
+#privacy-popup-dialog {
+
+  .v-card-text {
+    color: #BDBDBD;
+  }
+
+  .v-overlay__content {
+    font-size: var(--default-font-size);
+    background-color: purple;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+
+  .v-btn--size-default {
+      font-size: calc(0.9 * var(--default-font-size));
+    }  
+
+  .v-card-actions .v-btn {
+    padding: 0 4px;
+  }
+}
+
+.question-root {
+  position: absolute !important;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  padding: 5px;
+  width: fit-content !important;
+  // left: 50%;
+  // transform: translateX(-50%);
+  gap: 0 !important;
+  border: solid 1px #EFEFEF !important;
+  border-radius: 10px !important;
+  background-color: #222222 !important;
+  opacity: 0.95 !important;
+  z-index: 20000;
+
+  .question-title {
+    color: #EFEFEF;
+    font-size: 0.9rem;
+  }
+
+  .response-box {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .v-card-actions {
+    padding: 0;
+  }
+
+  .privacy-button {
+    font-size: 10px;
+    position: absolute;
+    left: 5px;
+  }
 }
 
 </style>
